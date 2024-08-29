@@ -4,8 +4,8 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from models.users import User
-from schemas.users import TokenData
+from ..models.users import User
+from ..schemas.users import TokenData
 from phish.dependencies import get_db
 from typing import Optional
 
@@ -19,7 +19,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password, password):
     return pwd_context.verify(plain_password, hashed_password)
 
 

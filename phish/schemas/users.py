@@ -12,10 +12,11 @@ class UserCreate(UserBase):
 
 
 class User(UserBase):
-    int: id
+    id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+        arbitrary_types_allowed = True  # allows arbitrary types
 
 
 class Token(BaseModel):
