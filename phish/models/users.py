@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from db_config.database import Base
-
+from database import Base, engine
 
 class User(Base):
     __tablename__ = "User"
@@ -11,5 +10,4 @@ class User(Base):
     password = Column(String)
 
 
-Base.metadata.create_all(bin=engine)
-
+Base.metadata.create_all(bind=engine)

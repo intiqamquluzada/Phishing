@@ -6,6 +6,7 @@ from jose import JWTError, jwt
 from models.users import User
 from schemas.users import UserCreate
 from database import SessionLocal, engine
+from dependencies import get_db
 import auth
 
 router = APIRouter()
@@ -19,7 +20,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Username already registered")
 
     hashed_password = auth.get_password_hash(user.password)
-    db_user = models.User(username=user.username, email=user.email, password=hashed_password)
+    db_user = User(username=user.username, email=user.email, password=hashed_password)
 
     db.add(db_user)
     db.commit()
