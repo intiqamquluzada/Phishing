@@ -1,28 +1,35 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from .auth import oauth2_scheme, SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
-from phish import models
-from phish import schemas
+from phish.models.users import User as UserModel
+from phish.schemas.users import User, UserCreate, ForgotPassword, Token, TokenData
 from ..database import SessionLocal, engine
 from ..dependencies import get_db
 from . import auth
+from typing import Optional
+from ..utils.uid import encode_uid, decode_uid
+from ..utils.email import send_email
+import uuid
+from fastapi.responses import JSONResponse
+
 
 
 router = APIRouter()
 security = HTTPBearer()
 
-@router.post("/register", response_model=schemas.users.User)
-def register(user: schemas.users.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.users.User).filter(models.users.User.username == user.username).first()
+
+@router.post("/register", response_model=User)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(UserModel).filter(UserModel.username == user.username).first()
 
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
 
     hashed_password = auth.get_password_hash(user.password)
-    db_user = models.users.User(username=user.username, email=user.email, hashed_password=hashed_password)
+    db_user = UserModel(username=user.username, email=user.email, hashed_password=hashed_password)
 
     db.add(db_user)
     db.commit()
@@ -31,7 +38,7 @@ def register(user: schemas.users.UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 
-@router.post("/token", response_model=schemas.users.Token)
+@router.post("/token", response_model=Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = auth.authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -47,7 +54,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
-@router.post("/refresh", response_model=schemas.users.Token)
+@router.post("/refresh", response_model=Token)
 def refresh_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -58,7 +65,7 @@ def refresh_token(token: str = Depends(oauth2_scheme)):
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        token_data = schemas.users.TokenData(username=username)
+        token_data = TokenData(username=username)
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -70,8 +77,42 @@ def refresh_token(token: str = Depends(oauth2_scheme)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/users/me", response_model=schemas.users.User)
-async def read_users_me(current_user: schemas.users.User = Depends(auth.get_current_user)):
+@router.get("/users/me", response_model=User)
+async def read_users_me(current_user: User = Depends(auth.get_current_user)):
     return current_user
 
+
+@router.post("/forgot-password")
+async def forgot_password(email: ForgotPassword, request: Request, db: Session = Depends(get_db)):
+    get_user = db.query(UserModel).filter(UserModel.email == email.email).first() 
+
+    if get_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    scheme = request.url.scheme
+    host = request.client.host
+    domain_url = f"{scheme}://{host}"
+
+    code = str(uuid.uuid4())
+
+    get_user.verification_code = code
+    db.commit()
+    db.refresh(get_user)
+
+    uid = encode_uid(get_user.id)
+
+    link = f"{domain_url}/reset-password-confirm/{uid}/{code}/"
+
+    subject = "Reset Password"
+    recipient = email.email,
+    message = f"Please click on the link below to reset your password: \n{link}"
+
+    await send_email(subject, recipient, message)
+
+    return JSONResponse(
+        {"message": "We have sent a link to your email address to reset your password."},
+        status_code=200
+    )
+
+    return 
 
