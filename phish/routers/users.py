@@ -1,14 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from .auth import oauth2_scheme, SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from phish.models.users import User as UserModel
-from phish.schemas.users import User, UserCreate, Token, TokenData
+from phish.schemas.users import User, UserCreate, ForgotPassword, Token, TokenData
 from ..database import SessionLocal, engine
 from ..dependencies import get_db
 from . import auth
+from typing import Optional
+from ..utils.uid import encode_uid, decode_uid
+from ..utils.email import send_email
+import uuid
+from fastapi.responses import JSONResponse
+
+
 
 router = APIRouter()
 security = HTTPBearer()
@@ -74,4 +81,38 @@ def refresh_token(token: str = Depends(oauth2_scheme)):
 async def read_users_me(current_user: User = Depends(auth.get_current_user)):
     return current_user
 
+
+@router.post("/forgot-password")
+async def forgot_password(email: ForgotPassword, request: Request, db: Session = Depends(get_db)):
+    get_user = db.query(UserModel).filter(UserModel.email == email.email).first() 
+
+    if get_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    scheme = request.url.scheme
+    host = request.client.host
+    domain_url = f"{scheme}://{host}"
+
+    code = str(uuid.uuid4())
+
+    get_user.verification_code = code
+    db.commit()
+    db.refresh(get_user)
+
+    uid = encode_uid(get_user.id)
+
+    link = f"{domain_url}/reset-password-confirm/{uid}/{code}/"
+
+    subject = "Reset Password"
+    recipient = email.email,
+    message = f"Please click on the link below to reset your password: \n{link}"
+
+    await send_email(subject, recipient, message)
+
+    return JSONResponse(
+        {"message": "We have sent a link to your email address to reset your password."},
+        status_code=200
+    )
+
+    return 
 

@@ -6,6 +6,8 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from phish import models
 from phish import schemas
+from phish.models.users import User as UserModel
+from phish.schemas.users import User, UserCreate, Token, TokenData
 from phish.dependencies import get_db
 from typing import Optional
 
@@ -50,11 +52,11 @@ def create_refresh_token(data: dict, expires_delta:  Optional[timedelta] = None)
 
 
 def get_user(db: Session, username: str):
-    return db.query(models.users.User).filter(models.users.User.username == username).first()
+    return db.query(UserModel).filter(UserModel.username == username).first()
 
 
 def authenticate_user(db: Session, username: str, password: str):
-    user = db.query(models.users.User).filter(models.users.User.username == username).first()
+    user = db.query(UserModel).filter(UserModel.username == username).first()
     if not user or not verify_password(password, user.hashed_password):
         return False
     return user
@@ -71,7 +73,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = schemas.users.TokenData(username=username)
+        token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
     user = get_user(db, username=token_data.username)
