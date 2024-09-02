@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from .auth import oauth2_scheme, SECRET_KEY, ALGORITHM
+from phish.routers.auth import oauth2_scheme, SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from phish.models.users import User as UserModel
-from phish.schemas.users import User, UserCreate, ForgotPassword, Token, TokenData
-from ..database import SessionLocal, engine
-from ..dependencies import get_db
-from . import auth
+from phish.schemas.users import User, UserCreate, ForgotPassword, ForgotPasswordConfirm, Token, TokenData
+from phish.database import SessionLocal, engine
+from phish.dependencies import get_db
+from phish.routers import auth
 from typing import Optional
-from ..utils.uid import encode_uid, decode_uid
-from ..utils.email import send_email
+from phish.utils.uid import encode_uid, decode_uid
+from phish.utils.email import send_email
 import uuid
 from fastapi.responses import JSONResponse
 
@@ -101,7 +101,7 @@ async def forgot_password(email: ForgotPassword, request: Request, db: Session =
 
     uid = encode_uid(get_user.id)
 
-    link = f"{domain_url}/reset-password-confirm/{uid}/{code}/"
+    link = f"{domain_url}/reset-password-confirm/{uid}/{code}"
 
     subject = "Reset Password"
     recipient = email.email,
@@ -114,5 +114,22 @@ async def forgot_password(email: ForgotPassword, request: Request, db: Session =
         status_code=200
     )
 
-    return 
 
+@router.post("/forgot-password-confirm/{uid}/{code}")
+async def forgot_password_confirm(uid: str, code: str, password: ForgotPasswordConfirm, db: Session = Depends(get_db)):
+    pk = decode_uid(uid)
+    get_user = db.query(UserModel).filter(UserModel.id==pk, UserModel.verification_code ==code).first()
+
+    if get_user is None:
+        raise Exception("User not found")
+    if password.password != password.password2:
+        raise Exception("Passwords do not match")
+
+    get_user.hashed_password = auth.pwd_context.hash(password.password)
+
+    print(get_user.hashed_password)
+
+    db.commit()
+    db.refresh(get_user)
+
+    return JSONResponse({'message': 'Password has been reset successfully.'}, status_code=status.HTTP_200_OK)
