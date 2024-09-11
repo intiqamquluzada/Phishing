@@ -18,6 +18,7 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
@@ -51,12 +52,12 @@ def create_refresh_token(data: dict, expires_delta:  Optional[timedelta] = None)
     return encoded_jwt
 
 
-def get_user(db: Session, username: str):
-    return db.query(UserModel).filter(UserModel.username == username).first()
+def get_user(db: Session, email: str):
+    return db.query(UserModel).filter(UserModel.email == email).first()
 
 
-def authenticate_user(db: Session, username: str, password: str):
-    user = db.query(UserModel).filter(UserModel.username == username).first()
+def authenticate_user(db: Session, email: str, password: str):
+    user = db.query(UserModel).filter(UserModel.email == email).first()
     if not user or not verify_password(password, user.hashed_password):
         return False
     return user
@@ -70,13 +71,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    user = get_user(db, username=token_data.username)
+    user = get_user(db, email=token_data.email)
     if user is None:
         raise credentials_exception
     return user

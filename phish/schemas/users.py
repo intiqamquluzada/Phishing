@@ -3,7 +3,6 @@ from typing import Optional
 
 
 class UserBase(BaseModel):
-    username: str
     email: str
 
 
@@ -33,5 +32,5 @@ class Token(BaseModel):
         token_type: str
 
 
-class TokenData(BaseModel):
-    username: Optional[str] = None
+class TokenData(UserBase):
+    ...
