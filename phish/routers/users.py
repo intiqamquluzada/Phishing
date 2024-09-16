@@ -30,7 +30,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         return JSONResponse(status_code=400, content={"message": "Email already registered"})
 
     hashed_password = auth.get_password_hash(user.password)
-    db_user = UserModel(email=user.email, hashed_password=hashed_password)
+    db_user = UserModel(email=user.email, hashed_password=hashed_password, role=user.role)  # Assign role from user
 
     try:
         db.add(db_user)
@@ -53,33 +53,10 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(days=auth.ACCESS_TOKEN_EXPIRE_DAYS)
-    access_token = auth.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
+    access_token = auth.create_access_token(data={"sub": user.email, "role": user.role.value}, expires_delta=access_token_expires)  # Include role in token
     refresh_token_expires = timedelta(days=auth.REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = auth.create_refresh_token(data={"sub": user.email}, expires_delta=refresh_token_expires)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
-
-
-@router.post("/refresh", response_model=Token)
-def refresh_token(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        token_data = TokenData(email=email)
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(days=auth.ACCESS_TOKEN_EXPIRE_DAYS)
-    access_token = auth.create_access_token(data={"sub": token_data.email}, expires_delta=access_token_expires)
-    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/users/me", response_model=User)
@@ -109,7 +86,6 @@ async def forgot_password(email: ForgotPassword, request: Request, db: Session =
     link = f"{domain_url}/reset-password-confirm/{uid}/{code}"
 
     subject = "Reset Password"
-    print(email.email)
     recipient = email.email
 
     message = f"Please click on the link below to reset your password: \n{link}"

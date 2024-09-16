@@ -1,3 +1,4 @@
+#schemas.py
 from pydantic import BaseModel
 from typing import Optional
 
@@ -8,10 +9,11 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    role: str  # Add the 'role' field here
 
 
 class ForgotPassword(BaseModel):
-     email: str
+    email: str
 
 
 class ForgotPasswordConfirm(BaseModel):
@@ -21,15 +23,22 @@ class ForgotPasswordConfirm(BaseModel):
 
 class User(UserBase):
     id: int
+    role: str
 
     class Config:
         from_attributes = True
-        arbitrary_types_allowed = True  # allows arbitrary types
+        arbitrary_types_allowed = True
+
+    @classmethod
+    def from_orm(cls, obj):
+        obj_dict = obj.__dict__.copy()
+        obj_dict['role'] = obj.role.value
+        return cls(**obj_dict)
 
 
 class Token(BaseModel):
-        access_token: str
-        token_type: str
+    access_token: str
+    token_type: str
 
 
 class TokenData(UserBase):
