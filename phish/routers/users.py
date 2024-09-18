@@ -5,18 +5,19 @@ from datetime import timedelta
 
 from phish.dependencies import get_db
 from phish.routers import auth
-from phish.routers.auth import oauth2_scheme, SECRET_KEY, ALGORITHM
-from jose import JWTError, jwt
+
 from phish.models.users import User as UserModel
 from phish.schemas.users import User, UserCreate, ForgotPassword, ForgotPasswordConfirm, Token, TokenData
 import sqlalchemy
-from sqlalchemy import or_
 from phish.utils.uid import encode_uid, decode_uid
 from phish.utils.email import send_email
 import uuid
 from fastapi.responses import JSONResponse
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"]
+)
 security = HTTPBearer()
 
 

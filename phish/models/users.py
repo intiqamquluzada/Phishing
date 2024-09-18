@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import (Column, Integer, String, Enum,
+                        ForeignKey, UniqueConstraint,
+                        Boolean)
 from enum import Enum as PyEnum
 from phish.database import Base, engine
 
