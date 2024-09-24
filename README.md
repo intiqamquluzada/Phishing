@@ -82,6 +82,6 @@ Install requirements
 Run locally
 
 ```bash
-  python3 manage.py runserver
+  fastapi dev phish/main.py
 ```
 
