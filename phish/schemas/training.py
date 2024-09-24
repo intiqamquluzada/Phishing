@@ -18,6 +18,7 @@ class TrainingInformationBase(BaseModel):
 
 
 class TrainingBase(BaseModel):
+    id: int
     module_name: str
     passing_score: int
     preview: Optional[str] = None
@@ -34,3 +35,8 @@ class TrainingResponse(TrainingBase):
 
     class Config:
         orm_mode = True
+
+
+class TrainingPatch(TrainingBase):
+    info: Optional[TrainingInformationBase] = None
+

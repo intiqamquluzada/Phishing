@@ -9,7 +9,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role: str  # Add the 'role' field here
+    role: str
 
 
 class ForgotPassword(BaseModel):

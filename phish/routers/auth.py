@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy.orm import Session
-
+from phish.models.training import TypeOfTraining
 from phish.dependencies import get_db
 from phish.models.users import User
 from fastapi.security import OAuth2PasswordBearer
@@ -29,6 +29,12 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
         return UserScheme.from_orm(db_user)
     return {"error": "User not found"}
 
+def require_role(required_role: TypeOfTraining):
+    def role_dependency(user: User = Depends(get_current_user)):
+        if user.role != required_role:
+            raise HTTPException(status_code=403, detail="Operation not permitted")
+        return user
+    return role_dependency
 
 def get_user_by_email(email: str, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == email).first()

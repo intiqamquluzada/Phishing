@@ -5,6 +5,7 @@ from phish.database import Base, engine
 
 
 class TypeOfTraining(PyEnum):
+    ADMIN = "ADMIN"
     SIMPLE = "SIMPLE"
     PREMIUM = "PREMIUM"
 
