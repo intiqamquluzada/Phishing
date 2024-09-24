@@ -8,15 +8,16 @@ class TypeOfTraining(PyEnum):
     SIMPLE = "SIMPLE"
     PREMIUM = "PREMIUM"
 
+
 class TrainingInformation(Base):
     __tablename__ = 'TrainingInformation'
 
     id = Column(Integer, primary_key=True, index=True)
     question_count = Column(Integer)
     pages_count = Column(Integer)
-    type = Column(Enum(TypeOfTraining), nullable=False)
+    type = Column(String, nullable=False)
 
-    training = relationship("Training", back_populates="info")
+    trainings = relationship("Training", back_populates="info")
 
 
 class Training(Base):
@@ -29,7 +30,7 @@ class Training(Base):
     preview = Column(String)
     compliance = Column(Boolean, default=False)
 
-    info = relationship("TrainingInformation", back_populates="training")
+    info = relationship("TrainingInformation", back_populates="trainings")
 
 
 Base.metadata.create_all(bind=engine)

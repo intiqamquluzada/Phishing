@@ -1,8 +1,8 @@
-"""training
+"""Update enum type for training
 
-Revision ID: 3463f6ab345a
+Revision ID: ef54cdd8f505
 Revises: 
-Create Date: 2024-09-18 12:06:51.703478
+Create Date: 2024-09-18 16:23:14.951153
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3463f6ab345a'
+revision: str = 'ef54cdd8f505'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
