@@ -5,6 +5,7 @@ from phish.dependencies import get_db
 from phish.models.email import EmailTemplate
 from phish.schemas.email import (EmailTemplateBase, EmailTemplateResponse, EmailTemplatePatch)
 from enum import Enum as PyEnum
+from fastapi.responses import JSONResponse
 
 
 router = APIRouter(
@@ -134,3 +135,22 @@ async def update_template_patch(template_id: int,
     db.refresh(upt_template)
 
     return upt_template
+
+
+@router.delete("/delete/{template_id",
+               summary="Update template",
+              description="Update template")
+async def delete_template(template_id: int, db: Session = Depends(get_db)):
+    template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
+
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+
+    db.delete(template)
+    db.commit()
+
+    content = {
+        "message": "Template deleted successfully"
+    }
+
+    return JSONResponse(status_code=200, content=content)
