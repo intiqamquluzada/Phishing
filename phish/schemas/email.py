@@ -18,8 +18,6 @@ class EmailTemplateBase(BaseModel):
     name: str
     description: str
     difficulty: EmailDifficulty
-    type: EmailType
-    payload_type: str
     subject: str
     body: str
 
@@ -38,8 +36,6 @@ class EmailTemplatePatch(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     difficulty: Optional[EmailDifficulty] = None
-    type: Optional[EmailType] = None
-    payload_type: Optional[str] = None
     subject: Optional[str] = None
     body: Optional[str] = None
 

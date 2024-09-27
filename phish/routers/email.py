@@ -47,8 +47,6 @@ async def create_template(template: EmailTemplateBase, db: Session = Depends(get
         name=template.name,
         description=template.description,
         difficulty=template.difficulty.value,
-        type=template.type.value,
-        payload_type=template.payload_type,
         subject=template.subject,
         body=template.body
     )
@@ -75,34 +73,6 @@ async def update_template(template_id: int,
     upt_template.name = template.name
     upt_template.description = template.description
     upt_template.difficulty = template.difficulty.value
-    upt_template.type = template.type.value
-    upt_template.payload_type = template.payload_type
-    upt_template.subject = template.subject
-    upt_template.body = template.body
-
-    db.commit()
-    db.refresh(upt_template)
-
-    return upt_template
-
-
-@router.put("/update/{template_id}",
-            response_model=EmailTemplateResponse,
-            summary="Update template",
-            description="Update template")
-async def update_template(template_id: int,
-                          template: EmailTemplateBase,
-                          db: Session = Depends(get_db)):
-    upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
-
-    if not upt_template:
-        raise HTTPException(status_code=404, detail="Template not found")
-
-    upt_template.name = template.name
-    upt_template.description = template.description
-    upt_template.difficulty = template.difficulty.value
-    upt_template.type = template.type.value
-    upt_template.payload_type = template.payload_type
     upt_template.subject = template.subject
     upt_template.body = template.body
 
