@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from phish.dependencies import get_db
 from phish.models.email import EmailTemplate
 from phish.schemas.email import (EmailTemplateBase, EmailTemplateResponse, EmailTemplatePatch)
 from enum import Enum as PyEnum
 from fastapi.responses import JSONResponse
+import shutil
 
 
 router = APIRouter(
@@ -42,13 +43,22 @@ async def email_template_list(template_id: int, db: Session = Depends(get_db)):
 @router.post("/create/",
              response_model=EmailTemplateResponse,
              summary="Create a new template")
-async def create_template(template: EmailTemplateBase, db: Session = Depends(get_db)):
+async def create_template(template: EmailTemplateBase,
+                          file: UploadFile = File(None),
+                          db: Session = Depends(get_db)):
+
+    if file:
+        file_location = f"../upload_files/template/{file.filename}"
+        with open(file_location, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
     new_template = EmailTemplate(
         name=template.name,
         description=template.description,
         difficulty=template.difficulty.value,
         subject=template.subject,
-        body=template.body
+        body=template.body,
+        file_path=file_location if file else None
     )
 
     db.add(new_template)
@@ -64,11 +74,19 @@ async def create_template(template: EmailTemplateBase, db: Session = Depends(get
             description="Update template")
 async def update_template(template_id: int,
                           template: EmailTemplateBase,
+                          file: UploadFile = File(None),
                           db: Session = Depends(get_db)):
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
 
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
+
+    if file:
+        file_location = f"../upload_files/template/{file.filename}"
+        with open(file_location, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        upt_template.file_path = file_location
 
     upt_template.name = template.name
     upt_template.description = template.description
@@ -88,6 +106,7 @@ async def update_template(template_id: int,
               description="Update template")
 async def update_template_patch(template_id: int,
                                 template: EmailTemplatePatch,
+                                file: UploadFile = File(None),
                                 db: Session = Depends(get_db)):
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
 
@@ -100,6 +119,13 @@ async def update_template_patch(template_id: int,
         if isinstance(value, PyEnum):
             value = value.value
         setattr(upt_template, key, value)
+
+    if file:
+        file_location = f"../upload_files/template/{file.filename}"
+        with open(file_location, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        upt_template.file_path = file_location
 
     db.commit()
     db.refresh(upt_template)

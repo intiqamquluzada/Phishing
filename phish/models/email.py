@@ -18,6 +18,7 @@ class EmailTemplate(Base):
     difficulty = Column(String, nullable=False)
     subject = Column(String)
     body = Column(String)
+    file_path = Column(String, nullable=False)
 
 
 Base.metadata.create_all(bind=engine)

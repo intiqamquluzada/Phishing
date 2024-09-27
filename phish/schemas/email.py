@@ -27,6 +27,7 @@ class EmailTemplateBase(BaseModel):
 
 class EmailTemplateResponse(EmailTemplateBase):
     id: int
+    file_path: Optional[str]
 
     class Config:
         orm_mode = True
@@ -38,6 +39,7 @@ class EmailTemplatePatch(BaseModel):
     difficulty: Optional[EmailDifficulty] = None
     subject: Optional[str] = None
     body: Optional[str] = None
+    file_path: Optional[str] = None
 
     class Config:
         orm_mode = True
