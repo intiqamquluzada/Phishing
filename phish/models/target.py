@@ -12,6 +12,7 @@ class TargetUser(Base):
     email = Column(String, unique=True, index=True)
     company = Column(String)
     job_title = Column(String)
+    target_id = Column(Integer, ForeignKey("Target.id"))
     targets = relationship("Target", back_populates="target_user")
 
 
@@ -21,7 +22,6 @@ class Target(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
 
-    target_user_id = Column(Integer, ForeignKey("TargetUser.id"))
     target_user = relationship("TargetUser", back_populates="targets")
 
 

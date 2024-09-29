@@ -22,7 +22,9 @@ Jinja2==3.1.4
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 mdurl==0.1.2
+numpy==2.1.1
 openpyxl==3.1.5
+pandas==2.2.3
 passlib==1.7.4
 pyasn1==0.6.0
 pydantic==2.8.2
@@ -30,9 +32,11 @@ pydantic-settings==2.4.0
 pydantic_core==2.20.1
 Pygments==2.18.0
 PyJWT==2.9.0
+python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-jose==3.3.0
 python-multipart==0.0.9
+pytz==2024.2
 PyYAML==6.0.2
 rich==13.8.0
 rsa==4.9
@@ -44,6 +48,7 @@ SQLAlchemy==2.0.32
 starlette==0.38.2
 typer==0.12.5
 typing_extensions==4.12.2
+tzdata==2024.2
 uvicorn==0.30.6
 uvloop==0.20.0
 watchfiles==0.23.0

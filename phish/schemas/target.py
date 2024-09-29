@@ -9,7 +9,7 @@ class TargetUserBase(BaseModel):
     email: str
     company: str
     job_title: str
-    target: str
+    target_id: int
 
 
 class TargetBase(BaseModel):
