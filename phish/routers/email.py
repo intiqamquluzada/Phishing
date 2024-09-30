@@ -133,11 +133,16 @@ async def update_template_patch(template_id: int,
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
 
-    upt_template.name = name
-    upt_template.description = description
-    upt_template.difficulty = difficulty.value
-    upt_template.subject = subject
-    upt_template.body = body
+    if name is not None:
+        upt_template.name = name
+    if description is not None:
+        upt_template.description = description
+    if difficulty is not None:
+        upt_template.difficulty = difficulty.value
+    if subject is not None:
+        upt_template.subject = subject
+    if body is not None:
+        upt_template.body = body
 
     if file:
         folder_path = "./upload_files/template/"
@@ -156,8 +161,8 @@ async def update_template_patch(template_id: int,
 
 
 @router.delete("/delete/{template_id",
-               summary="Update template",
-               description="Update template")
+               summary="Delete template",
+               description="Delete template")
 async def delete_template(template_id: int, db: Session = Depends(get_db)):
     template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
 
