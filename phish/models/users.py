@@ -20,7 +20,7 @@ class User(Base):
     hashed_password = Column(String)
     verification_code = Column(String)
     role = Column(Enum(RoleType), nullable=False)
-    administration = relationship("Administration", back_populates="user", foreign_keys="[Administration.user_id]")
+    administration = relationship("Administration", back_populates="user", uselist=False, foreign_keys="[Administration.user_id]")
     invite = relationship("Invite", back_populates="user", foreign_keys="[Invite.user_id]")
 
 Base.metadata.create_all(bind=engine)

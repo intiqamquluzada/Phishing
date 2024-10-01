@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from enum import Enum as PyEnum
+from typing import Optional, List
 
 
 class TypeOfTraining(PyEnum):
@@ -8,10 +9,19 @@ class TypeOfTraining(PyEnum):
     PREMIUM = "PREMIUM"
 
 
+class QuestionBase(BaseModel):
+    question: str
+
+
+class QuestionResponse(QuestionBase):
+    id: int
+
+
 class TrainingInformationBase(BaseModel):
     question_count: int
     pages_count: int
     type: TypeOfTraining
+    question: List[QuestionResponse]
 
     class Config:
         orm_mode = True
