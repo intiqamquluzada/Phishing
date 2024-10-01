@@ -3,12 +3,6 @@ from enum import Enum as PyEnum
 from phish.database import Base, engine
 
 
-class EmailDifficulty(PyEnum):
-    EASY = "EASY"
-    MEDIUM = "MEDIUM"
-    HARD = "HARD"
-
-
 class EmailTemplate(Base):
     __tablename__ = 'EmailTemplate'
 

@@ -84,17 +84,15 @@ async def forgot_password(email: ForgotPassword, request: Request, db: Session =
     uid = encode_uid(get_user.id)
 
     link = f"{domain_url}/reset-password-confirm/{uid}/{code}"
-
     subject = "Reset Password"
     recipient = email.email
-
     message = f"Please click on the link below to reset your password: \n{link}"
 
     await send_email(subject, [recipient], message)
 
     return JSONResponse(
         {"message": "We have sent a link to your email address to reset your password."},
-        status_code=200
+        status_code=250
     )
 
 
