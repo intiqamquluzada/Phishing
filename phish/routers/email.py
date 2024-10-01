@@ -1,15 +1,15 @@
 from sqlalchemy.orm import Session
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
+from fastapi.responses import JSONResponse
 from phish.dependencies import get_db
 from phish.models.email import EmailTemplate
 from phish.schemas.email import (EmailDifficulty, EmailTemplateBase, EmailTemplateResponse)
+from phish.utils.generator import generate_short_uuid
+from phish.utils.files import save_file
 from enum import Enum as PyEnum
-from fastapi.responses import JSONResponse
+from typing import List
 import shutil
 import os
-from phish.utils.generator import generate_short_uuid
-
 
 router = APIRouter(
     prefix="/email-templates",
@@ -53,13 +53,7 @@ async def create_template(name: str = Form(...),
                           file: UploadFile = File(None),
                           db: Session = Depends(get_db)):
 
-    if file:
-        folder_path = "./upload_files/template/"
-        os.makedirs(folder_path, exist_ok=True)
-        file_location = os.path.join(folder_path, f"{generate_short_uuid()}-{file.filename}")
-
-        with open(file_location, "wb") as f:
-            shutil.copyfileobj(file.file, f)
+    save_location = save_file(file, "template")
 
     new_template = EmailTemplate(
         name=name,
@@ -67,7 +61,7 @@ async def create_template(name: str = Form(...),
         difficulty=difficulty.value,
         subject=subject,
         body=body,
-        file_path=file_location if file else None
+        file_path=save_location if file else None
     )
 
     db.add(new_template)
@@ -94,15 +88,10 @@ async def update_template(template_id: int,
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
 
-    if file:
-        folder_path = "./upload_files/template/"
-        os.makedirs(folder_path, exist_ok=True)
-        file_location = os.path.join(folder_path, f"{generate_short_uuid()}-{file.filename}")
+    save_location = save_file(file, "template")
 
-        with open(file_location, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-
-        upt_template.file_path = file_location
+    if save_location:
+        upt_template.file_path = save_location
 
     upt_template.name = name
     upt_template.description = description
@@ -144,15 +133,10 @@ async def update_template_patch(template_id: int,
     if body is not None:
         upt_template.body = body
 
-    if file:
-        folder_path = "./upload_files/template/"
-        os.makedirs(folder_path, exist_ok=True)
-        file_location = os.path.join(folder_path, f"{generate_short_uuid()}-{file.filename}")
+    save_location = save_file(file, "template")
 
-        with open(file_location, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-
-        upt_template.file_path = file_location
+    if save_location:
+        upt_template.file_path = save_location
 
     db.commit()
     db.refresh(upt_template)

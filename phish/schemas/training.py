@@ -18,10 +18,8 @@ class TrainingInformationBase(BaseModel):
 
 
 class TrainingBase(BaseModel):
-    id: int
     module_name: str
     passing_score: int
-    preview: Optional[str] = None
     compliance: bool
 
 
@@ -31,6 +29,7 @@ class TrainingCreate(TrainingBase):
 
 class TrainingResponse(TrainingBase):
     id: int
+    preview: Optional[str] = None
     info: TrainingInformationBase
 
     class Config:

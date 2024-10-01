@@ -1,10 +1,11 @@
 from typing import Union
 from fastapi import FastAPI
-from .routers import users, training, email, target
+from .routers import users, training, email, target, administration
 
 app = FastAPI()
 app.include_router(users.router)
 app.include_router(training.router)
 app.include_router(email.router)
 app.include_router(target.router)
+app.include_router(administration.router)
 
