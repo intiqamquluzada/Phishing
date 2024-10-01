@@ -2,6 +2,7 @@ from phish.utils.generator import generate_short_uuid
 import shutil
 import os
 
+
 def save_file(file, folder_name):
     if file:
         folder_path = f"phish/upload_files/{folder_name}/"

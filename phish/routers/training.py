@@ -2,14 +2,14 @@ from typing import List
 
 import sqlalchemy
 from fastapi import (APIRouter, Depends, HTTPException, status,
-                     Form, Request, UploadFile, File)
+                     Form, Request, UploadFile, Body, File)
 from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from phish.utils.files import save_file
 from phish.dependencies import get_db
-from phish.models.training import Training, TrainingInformation
+from phish.models.training import Training, TrainingInformation, Question
 from phish.models.training import TypeOfTraining as TrainType
 from phish.models.users import User as UserModel
 from phish.routers.auth import require_role
@@ -47,15 +47,16 @@ def create_new_training(
         module_name: str = Form(...),
         passing_score: int = Form(...),
         compliance: bool = Form(...),
-        question_count: int = Form(...),
         pages_count: int = Form(...),
         type: TypeOfTraining = Form(...),
-        db: Session = Depends(get_db),
         preview: UploadFile = File(None),
+        questions: List[str] = Form(...),
+        db: Session = Depends(get_db),
         user: UserModel = Depends(require_role(TrainType.ADMIN))
 ):
+
     training_info = TrainingInformation(
-        question_count=question_count,
+        question_count=len(questions),
         pages_count=pages_count,
         type=type.value
     )
@@ -63,6 +64,15 @@ def create_new_training(
     db.add(training_info)
     db.commit()
     db.refresh(training_info)
+
+    for question in questions:
+        create_question = Question(
+            question=question,
+            training_information_id=training_info.id
+        )
+        db.add(create_question)
+
+    db.commit()
 
     save_location = save_file(preview, "training_preview")
 
@@ -86,10 +96,10 @@ def update_training_by_id(training_id: int,
                           module_name: str = Form(...),
                           passing_score: int = Form(...),
                           compliance: bool = Form(...),
-                          question_count: int = Form(...),
                           pages_count: int = Form(...),
                           type: TypeOfTraining = Form(...),
                           preview: UploadFile = File(None),
+                          questions: List[str] = Form(...),
                           db: Session = Depends(get_db),
                           user: UserModel = Depends(require_role(TrainType.ADMIN))
                           ):
@@ -103,9 +113,24 @@ def update_training_by_id(training_id: int,
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
 
-    training_info.question_count = question_count
+    question = db.query(Question).filter(Question.training_information_id == training_info.id)
+
+    if question:
+        question.delete(synchronize_session=False) # delete all data
+        db.commit()
+
+    training_info.question_count = len(questions)
     training_info.pages_count = pages_count
-    training_info.type = type.value  # Convert enum to string
+    training_info.type = type.value
+
+    for question in questions:
+        create_question = Question(
+            question=question,
+            training_information_id=training_info.id
+        )
+        db.add(create_question)
+
+    db.commit()
 
     training.module_name = module_name
     training.passing_score = passing_score
@@ -123,10 +148,10 @@ def partially_update_training(training_id: int,
                               module_name: str = Form(...),
                               passing_score: int = Form(...),
                               compliance: bool = Form(...),
-                              question_count: int = Form(...),
                               pages_count: int = Form(...),
                               type: TypeOfTraining = Form(...),
                               preview: UploadFile = File(None),
+                              questions: List[str] = Form(...),
                               db: Session = Depends(get_db),
                               user: UserModel = Depends(require_role(TrainType.ADMIN))
                               ):
@@ -140,6 +165,20 @@ def partially_update_training(training_id: int,
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
 
+    question = db.query(Question).filter(Question.training_information_id == training_info.id)
+
+    if question:
+        question.delete(synchronize_session=False)  # delete all data
+        db.commit()
+
+    if questions is not None:
+        for question in questions:
+            create_question = Question(
+                question=question,
+                training_information_id=training_info.id
+            )
+            db.add(create_question)
+        db.commit()
     if module_name is not None:
         training.module_name = module_name
     if passing_score is not None:
@@ -149,8 +188,8 @@ def partially_update_training(training_id: int,
     if compliance is not None:
         training.compliance = compliance
 
-    if question_count is not None:
-        training_info.question_count = question_count
+    if questions is not None:
+        training_info.question_count = questions
     if pages_count is not None:
         training_info.pages_count = pages_count
     if type is not None:

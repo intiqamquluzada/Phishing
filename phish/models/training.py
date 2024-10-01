@@ -10,6 +10,15 @@ class TypeOfTraining(PyEnum):
     PREMIUM = "PREMIUM"
 
 
+class Question(Base):
+    __tablename__ = 'Question'
+
+    id = Column(Integer, primary_key=True, index=True)
+    question = Column(String)
+    training_information_id = Column(Integer, ForeignKey("TrainingInformation.id"))
+    training_information = relationship("TrainingInformation", back_populates="question")
+
+
 class TrainingInformation(Base):
     __tablename__ = 'TrainingInformation'
 
@@ -19,6 +28,7 @@ class TrainingInformation(Base):
     type = Column(String, nullable=False)
 
     trainings = relationship("Training", back_populates="info")
+    question = relationship("Question", back_populates="training_information")
 
 
 class Training(Base):
