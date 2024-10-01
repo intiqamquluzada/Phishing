@@ -52,7 +52,7 @@ def create_new_training(
         type: TypeOfTraining = Form(...),
         db: Session = Depends(get_db),
         preview: UploadFile = File(None),
-        # user: UserModel = Depends(require_role(TrainType.ADMIN))
+        user: UserModel = Depends(require_role(TrainType.ADMIN))
 ):
     training_info = TrainingInformation(
         question_count=question_count,
@@ -91,7 +91,7 @@ def update_training_by_id(training_id: int,
                           type: TypeOfTraining = Form(...),
                           preview: UploadFile = File(None),
                           db: Session = Depends(get_db),
-                          # user: UserModel = Depends(require_role(TrainType.ADMIN))
+                          user: UserModel = Depends(require_role(TrainType.ADMIN))
                           ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
@@ -128,7 +128,7 @@ def partially_update_training(training_id: int,
                               type: TypeOfTraining = Form(...),
                               preview: UploadFile = File(None),
                               db: Session = Depends(get_db),
-                              # user: UserModel = Depends(require_role(TrainType.ADMIN))
+                              user: UserModel = Depends(require_role(TrainType.ADMIN))
                               ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
@@ -164,7 +164,8 @@ def partially_update_training(training_id: int,
 
 @router.delete("/delete/{training_id}", response_model=dict, summary="Delete a training")
 def delete_training(training_id: int, db: Session = Depends(get_db),
-                    user: UserModel = Depends(require_role(TrainType.ADMIN))):
+                    user: UserModel = Depends(require_role(TrainType.ADMIN))
+                    ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
     if not training:
