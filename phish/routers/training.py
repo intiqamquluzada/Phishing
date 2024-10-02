@@ -13,7 +13,7 @@ from phish.models.training import Training, TrainingInformation, Question
 from phish.models.training import TypeOfTraining as TrainType
 from phish.models.users import User as UserModel
 from phish.routers.auth import require_role
-from phish.schemas.training import (TypeOfTraining, TrainingBase, TrainingInformationBase,
+from phish.schemas.training import (TrainingBase, TrainingInformationBase,
                                     TrainingResponse, TrainingCreate, TrainingPatch)
 
 
@@ -46,19 +46,17 @@ async def training_detail(training_id: int, db: Session = Depends(get_db)):
 def create_new_training(
         module_name: str = Form(...),
         passing_score: int = Form(...),
-        compliance: bool = Form(...),
         pages_count: int = Form(...),
-        type: TypeOfTraining = Form(...),
         preview: UploadFile = File(None),
+        presentation: UploadFile = File(None),
         questions: List[str] = Form(...),
         db: Session = Depends(get_db),
-        user: UserModel = Depends(require_role(TrainType.ADMIN))
+        # user: UserModel = Depends(require_role(TrainType.ADMIN))
 ):
 
     training_info = TrainingInformation(
         question_count=len(questions),
         pages_count=pages_count,
-        type=type.value
     )
 
     db.add(training_info)
@@ -74,13 +72,14 @@ def create_new_training(
 
     db.commit()
 
-    save_location = save_file(preview, "training_preview")
+    save_preview_location = save_file(preview, "training_preview")
+    save_presentation_location = save_file(presentation, "training_presentation")
 
     new_training = Training(
         module_name=module_name,
         passing_score=passing_score,
-        preview=save_location if preview else None,
-        compliance=compliance,
+        preview=save_preview_location if preview else None,
+        presentation=save_presentation_location if presentation else None,
         training_information=training_info.id
     )
 
@@ -95,20 +94,20 @@ def create_new_training(
 def update_training_by_id(training_id: int,
                           module_name: str = Form(...),
                           passing_score: int = Form(...),
-                          compliance: bool = Form(...),
                           pages_count: int = Form(...),
-                          type: TypeOfTraining = Form(...),
                           preview: UploadFile = File(None),
+                          presentation: UploadFile = File(None),
                           questions: List[str] = Form(...),
                           db: Session = Depends(get_db),
-                          user: UserModel = Depends(require_role(TrainType.ADMIN))
+                          # user: UserModel = Depends(require_role(TrainType.ADMIN))
                           ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    save_location = save_file(preview, "training_preview")
+    save_preview_location = save_file(preview, "training_preview")
+    save_presentation_location = save_file(presentation, "training_presentation")
 
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
@@ -121,7 +120,6 @@ def update_training_by_id(training_id: int,
 
     training_info.question_count = len(questions)
     training_info.pages_count = pages_count
-    training_info.type = type.value
 
     for question in questions:
         create_question = Question(
@@ -134,8 +132,8 @@ def update_training_by_id(training_id: int,
 
     training.module_name = module_name
     training.passing_score = passing_score
-    training.compliance = compliance
-    training.preview = save_location if preview else None
+    training.preview = save_preview_location if preview else None
+    training.presentation = save_presentation_location if presentation else None
 
     db.commit()
     db.refresh(training)
@@ -147,20 +145,20 @@ def update_training_by_id(training_id: int,
 def partially_update_training(training_id: int,
                               module_name: str = Form(...),
                               passing_score: int = Form(...),
-                              compliance: bool = Form(...),
                               pages_count: int = Form(...),
-                              type: TypeOfTraining = Form(...),
                               preview: UploadFile = File(None),
+                              presentation: UploadFile = File(None),
                               questions: List[str] = Form(...),
                               db: Session = Depends(get_db),
-                              user: UserModel = Depends(require_role(TrainType.ADMIN))
+                              # user: UserModel = Depends(require_role(TrainType.ADMIN))
                               ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    save_location = save_file(preview, "training_preview")
+    save_preview_location = save_file(preview, "training_preview")
+    save_presentation_location = save_file(presentation, "training_presentation")
 
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
@@ -184,16 +182,14 @@ def partially_update_training(training_id: int,
     if passing_score is not None:
         training.passing_score = passing_score
     if preview is not None:
-        training.preview = save_location if preview else None
-    if compliance is not None:
-        training.compliance = compliance
+        training.preview = save_preview_location if preview else None
+    if presentation is not None:
+        training.presentation = save_presentation_location if presentation else None
 
     if questions is not None:
-        training_info.question_count = questions
+        training_info.question_count = len(questions)
     if pages_count is not None:
         training_info.pages_count = pages_count
-    if type is not None:
-        training_info.type = type.value
 
     db.commit()
     db.refresh(training)
@@ -203,7 +199,7 @@ def partially_update_training(training_id: int,
 
 @router.delete("/delete/{training_id}", response_model=dict, summary="Delete a training")
 def delete_training(training_id: int, db: Session = Depends(get_db),
-                    user: UserModel = Depends(require_role(TrainType.ADMIN))
+                    # user: UserModel = Depends(require_role(TrainType.ADMIN))
                     ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
