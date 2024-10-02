@@ -12,6 +12,11 @@ class UserCreate(UserBase):
     role: str
 
 
+class UserPatch(UserBase):
+    password: Optional[str]
+    role: Optional[str]
+
+
 class ForgotPassword(BaseModel):
     email: str
 

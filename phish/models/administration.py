@@ -16,7 +16,7 @@ class Administration(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-    status = Column(Enum(Status))
+    status = Column(String)
     is_active = Column(Boolean, default=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     user = relationship("User", back_populates="administration")
