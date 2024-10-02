@@ -25,7 +25,6 @@ class TrainingInformation(Base):
     id = Column(Integer, primary_key=True, index=True)
     question_count = Column(Integer)
     pages_count = Column(Integer)
-    type = Column(String, nullable=False)
 
     trainings = relationship("Training", back_populates="info")
     question = relationship("Question", back_populates="training_information")
@@ -38,8 +37,8 @@ class Training(Base):
     module_name = Column(String)
     passing_score = Column(Integer)
     training_information = Column(Integer, ForeignKey("TrainingInformation.id"))
+    presentation = Column(String)
     preview = Column(String)
-    compliance = Column(Boolean, default=False)
 
     info = relationship("TrainingInformation", back_populates="trainings")
 
