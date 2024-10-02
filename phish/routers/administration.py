@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Form, status, Request
 from fastapi.responses import JSONResponse
+from phish.routers import auth
 from phish.dependencies import get_db
 from phish.models.users import User
 from phish.models.administration import Administration, Invite
@@ -34,19 +35,22 @@ async def administration_list(db: Session = Depends(get_db)):
 @router.post("/send-invite")
 async def send_invite(email: SendInvite,
                       request: Request,
+                      current_user: User = Depends(auth.get_current_user),
                       db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    check_administration = db.query(Administration).filter(user == user).first()
-    if check_administration.status == "ACTIVE":
-        raise HTTPException(status_code=404, detail="User is already in campaign")
-    if check_administration.status == "INVITED":
-        db.delete(check_administration)
-        db.commit()
+    check_administration = db.query(Administration).filter(Administration.user_id == user.id).first()
 
-    check_invite = db.query(Invite).filter(user == user).first()
+    if check_administration:
+        if check_administration.status.value == "ACTIVE":
+            raise HTTPException(status_code=404, detail="User is already in campaign")
+        if check_administration.status.value == "INVITED":
+            db.delete(check_administration)
+            db.commit()
+
+    check_invite = db.query(Invite).filter(Invite.user == user).first()
     if check_invite:
         db.delete(check_invite)
         db.commit()
@@ -65,9 +69,11 @@ async def send_invite(email: SendInvite,
 
     await send_email(subject, [recipient], message)
 
+    campaign_id = db.query(Administration).filter(Administration.user_id == current_user.id).first().campaign_id
+
     invite = Invite(
         user_id=user.id,
-        campaign_id=user.administration.campaign_id,
+        campaign_id=campaign_id,
         verification_code=code
     )
     db.add(invite)
@@ -78,7 +84,8 @@ async def send_invite(email: SendInvite,
     administration = Administration(
         name=name,
         status="INVITED",
-        campaign_id=user.administration.campaign_id
+        user_id=user.id,
+        campaign_id=campaign_id
     )
     db.add(administration)
     db.commit()
@@ -97,8 +104,9 @@ async def get_invite(uid: str = Form(...),
     if not get_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    check_invite = db.query(Invite).filter(Invite.user == get_user, verification_code=code).first()
-    get_administration = db.query(Administration).filter(Invite.user == get_user, status == "INVITED").first()
+    check_invite = db.query(Invite).filter(Invite.user == get_user, Invite.verification_code == code).first()
+    get_administration = db.query(Administration).filter(Administration.user_id == get_user.id,
+                                                         Administration.status == "INVITED").first()
 
     if not check_invite:
         raise HTTPException(status_code=404, detail="Invitation not found")
