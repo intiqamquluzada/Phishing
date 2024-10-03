@@ -1,16 +1,24 @@
-from phish.utils.generator import generate_short_uuid
-import shutil
 import os
+import shutil
+from urllib.parse import urljoin
+from fastapi import Request
+from phish.utils.generator import generate_short_uuid
+from phish import main
 
 
-def save_file(file, folder_name):
+# save the file and return its location
+def save_file(file, request: Request):
     if file:
-        folder_path = f"/phish/upload_files/{folder_name}/"
-        os.makedirs(folder_path, exist_ok=True)
-        file_location = os.path.join(folder_path, f"{generate_short_uuid()}-{file.filename}")
+        os.makedirs(main.upload_folder, exist_ok=True)
+        filename = file.filename.replace(" ", "")
+        file_name = f"{generate_short_uuid()}-{filename}"
+        file_location = os.path.join(main.upload_folder, file_name)
 
         with open(file_location, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
-        return file_location
-    return False
+        base_url = str(request.base_url)
+        file_url = urljoin(base_url, file_name)
+
+        return file_url
+    return None
