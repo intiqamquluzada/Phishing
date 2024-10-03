@@ -51,7 +51,8 @@ def create_new_training(
         presentation: UploadFile = File(None),
         questions: List[str] = Form(...),
         db: Session = Depends(get_db),
-        # user: UserModel = Depends(require_role(TrainType.ADMIN))
+        user: UserModel = Depends(require_role(TrainType.ADMIN)),
+        request: Request = None
 ):
 
     training_info = TrainingInformation(
@@ -72,8 +73,8 @@ def create_new_training(
 
     db.commit()
 
-    save_preview_location = save_file(preview, "training_preview")
-    save_presentation_location = save_file(presentation, "training_presentation")
+    save_preview_location = save_file(preview, request)
+    save_presentation_location = save_file(presentation, request)
 
     new_training = Training(
         module_name=module_name,
@@ -99,15 +100,16 @@ def update_training_by_id(training_id: int,
                           presentation: UploadFile = File(None),
                           questions: List[str] = Form(...),
                           db: Session = Depends(get_db),
-                          # user: UserModel = Depends(require_role(TrainType.ADMIN))
+                          request: Request = None,
+                          user: UserModel = Depends(require_role(TrainType.ADMIN))
                           ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    save_preview_location = save_file(preview, "training_preview")
-    save_presentation_location = save_file(presentation, "training_presentation")
+    save_preview_location = save_file(preview, request)
+    save_presentation_location = save_file(presentation, request)
 
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
@@ -150,15 +152,16 @@ def partially_update_training(training_id: int,
                               presentation: UploadFile = File(None),
                               questions: List[str] = Form(...),
                               db: Session = Depends(get_db),
-                              # user: UserModel = Depends(require_role(TrainType.ADMIN))
+                              request: Request = None,
+                              user: UserModel = Depends(require_role(TrainType.ADMIN))
                               ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    save_preview_location = save_file(preview, "training_preview")
-    save_presentation_location = save_file(presentation, "training_presentation")
+    save_preview_location = save_file(preview, request)
+    save_presentation_location = save_file(presentation, request)
 
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
@@ -199,7 +202,7 @@ def partially_update_training(training_id: int,
 
 @router.delete("/delete/{training_id}", response_model=dict, summary="Delete a training")
 def delete_training(training_id: int, db: Session = Depends(get_db),
-                    # user: UserModel = Depends(require_role(TrainType.ADMIN))
+                    user: UserModel = Depends(require_role(TrainType.ADMIN))
                     ):
     training = db.query(Training).filter(Training.id == training_id).first()
 

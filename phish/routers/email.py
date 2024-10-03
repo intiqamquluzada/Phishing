@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
+from fastapi import (APIRouter, Depends, HTTPException, Form,
+                     UploadFile, File, Request)
 from fastapi.responses import JSONResponse
 from phish.dependencies import get_db
 from phish.models.email import EmailTemplate
@@ -51,9 +52,10 @@ async def create_template(name: str = Form(...),
                           subject: str = Form(...),
                           body: str = Form(...),
                           file: UploadFile = File(None),
+                          request: Request = None,
                           db: Session = Depends(get_db)):
 
-    save_location = save_file(file, "template")
+    save_location = save_file(file, request)
 
     new_template = EmailTemplate(
         name=name,
@@ -82,13 +84,14 @@ async def update_template(template_id: int,
                           subject: str = Form(...),
                           body: str = Form(...),
                           file: UploadFile = File(None),
+                          request: Request = None,
                           db: Session = Depends(get_db)):
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
 
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
 
-    save_location = save_file(file, "template")
+    save_location = save_file(file, request)
 
     if save_location:
         upt_template.file_path = save_location
@@ -116,6 +119,7 @@ async def update_template_patch(template_id: int,
                                 subject: str = Form(None),
                                 body: str = Form(None),
                                 file: UploadFile = File(None),
+                                request: Request = None,
                                 db: Session = Depends(get_db)):
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
 
@@ -133,7 +137,7 @@ async def update_template_patch(template_id: int,
     if body is not None:
         upt_template.body = body
 
-    save_location = save_file(file, "template")
+    save_location = save_file(file, request)
 
     if save_location:
         upt_template.file_path = save_location
