@@ -29,12 +29,16 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
         return UserScheme.from_orm(db_user)
     return {"error": "User not found"}
 
+
 def require_role(required_role: TypeOfTraining):
     def role_dependency(user: User = Depends(get_current_user)):
-        if user.role != required_role:
+        if not user.role or user.role != required_role:
             raise HTTPException(status_code=403, detail="Operation not permitted")
+
         return user
+
     return role_dependency
+
 
 def get_user_by_email(email: str, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == email).first()
@@ -64,7 +68,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "role": data.get("role")})  # Add role to token
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -89,13 +93,23 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        role: str = payload.get("role")  # Extract the role from the token
-        if email is None:
+        role: str = payload.get("role")  # Extract role from token
+
+        # Log or print the payload for debugging
+        print(f"Decoded token payload: {payload}")
+
+        if email is None or role is None:
             raise credentials_exception
+
         token_data = TokenData(email=email)
-    except JWTError:
+    except JWTError as e:
+        print(f"JWT Error: {e}")  # Log the error for debugging
         raise credentials_exception
-    user = get_user_by_email(email=token_data.email, db=db)  # Use the new function
+
+    user = get_user_by_email(email=token_data.email, db=db)
     if user is None:
         raise credentials_exception
+
+    # Add role to user object if it exists
+    user.role = role  # If not stored in DB, use the role from the token
     return user

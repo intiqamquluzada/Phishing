@@ -1,45 +1,50 @@
+from fastapi import (APIRouter, Depends, HTTPException, Form, UploadFile, File, Request, WebSocket, WebSocketDisconnect)
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.orm import Session
-from fastapi import (APIRouter, Depends, HTTPException, Form,
-                     UploadFile, File, Request)
-from fastapi.responses import JSONResponse
-from phish.dependencies import get_db
-from phish.models.email import EmailTemplate
-from phish.schemas.email import (EmailDifficulty, EmailTemplateBase, EmailTemplateResponse)
-from phish.utils.generator import generate_short_uuid
-from phish.utils.files import save_file
-from enum import Enum as PyEnum
 from typing import List
-import shutil
-import os
+from uuid import uuid4
+
+from phish.dependencies import get_db
+from phish.external_services.inject_tracking import inject_tracking_pixel
+from phish.models.email import EmailTemplate, EmailReadEvent
+from phish.schemas.email import EmailDifficulty, EmailTemplateResponse
+from phish.utils.files import save_file
 
 router = APIRouter(
     prefix="/email-templates",
     tags=["Email Templates"]
 )
 
+connected_clients: List[WebSocket] = []
+
+@router.websocket("/ws/email-tracker")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connected_clients.append(websocket)
+    try:
+        while True:
+            await websocket.receive_text()  # You can handle messages if needed
+    except WebSocketDisconnect:
+        connected_clients.remove(websocket)
+
+
 @router.get("/",
             response_model=List[EmailTemplateResponse],
-            summary="List of email templates",
-            description="List of email templates")
+            summary="List of email templates")
 async def email_template_list(db: Session = Depends(get_db)):
     templates = db.query(EmailTemplate).all()
-
     if not templates:
         raise HTTPException(status_code=404, detail="Email template not found")
-
     return templates
 
 
 @router.get("/detail/{template_id}",
             response_model=EmailTemplateResponse,
-            summary="Detail of email templates",
-            description="Detail of email templates")
-async def email_template_list(template_id: int, db: Session = Depends(get_db)):
+            summary="Detail of email templates")
+async def email_template_detail(template_id: int, db: Session = Depends(get_db)):
     template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
-
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-
     return template
 
 
@@ -56,6 +61,7 @@ async def create_template(name: str = Form(...),
                           db: Session = Depends(get_db)):
 
     save_location = save_file(file, request)
+    unique_uuid = str(uuid4())
 
     new_template = EmailTemplate(
         name=name,
@@ -66,6 +72,9 @@ async def create_template(name: str = Form(...),
         file_path=save_location if file else None
     )
 
+    # Inject the tracking pixel
+    new_template.body = inject_tracking_pixel(new_template.body, new_template.id, unique_uuid)
+
     db.add(new_template)
     db.commit()
     db.refresh(new_template)
@@ -75,8 +84,7 @@ async def create_template(name: str = Form(...),
 
 @router.put("/update/{template_id}",
             response_model=EmailTemplateResponse,
-            summary="Update template",
-            description="Update template")
+            summary="Update template")
 async def update_template(template_id: int,
                           name: str = Form(...),
                           description: str = Form(...),
@@ -87,12 +95,10 @@ async def update_template(template_id: int,
                           request: Request = None,
                           db: Session = Depends(get_db)):
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
-
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
 
     save_location = save_file(file, request)
-
     if save_location:
         upt_template.file_path = save_location
 
@@ -110,8 +116,7 @@ async def update_template(template_id: int,
 
 @router.patch("/update/{template_id}",
               response_model=EmailTemplateResponse,
-              summary="Update template",
-              description="Update template")
+              summary="Partially update template")
 async def update_template_patch(template_id: int,
                                 name: str = Form(None),
                                 description: str = Form(None),
@@ -122,7 +127,6 @@ async def update_template_patch(template_id: int,
                                 request: Request = None,
                                 db: Session = Depends(get_db)):
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
-
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
 
@@ -138,7 +142,6 @@ async def update_template_patch(template_id: int,
         upt_template.body = body
 
     save_location = save_file(file, request)
-
     if save_location:
         upt_template.file_path = save_location
 
@@ -148,12 +151,11 @@ async def update_template_patch(template_id: int,
     return upt_template
 
 
-@router.delete("/delete/{template_id",
+@router.delete("/delete/{template_id}",
                summary="Delete template",
                description="Delete template")
 async def delete_template(template_id: int, db: Session = Depends(get_db)):
     template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
-
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
 
@@ -165,3 +167,19 @@ async def delete_template(template_id: int, db: Session = Depends(get_db)):
     }
 
     return JSONResponse(status_code=200, content=content)
+
+
+@router.get("/track/{template_id}")
+async def track_email_read(template_id: int, uuid: str, db: Session = Depends(get_db)):
+    # Log the email read event
+    email_read_event = EmailReadEvent(template_id=template_id, uuid=uuid)
+    db.add(email_read_event)
+    db.commit()
+
+    # Notify all connected WebSocket clients
+    for client in connected_clients:
+        await client.send_text(f"Email template {template_id} was read (UUID: {uuid})")
+
+    # Serve a transparent 1x1 pixel image
+    transparent_pixel = b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF\x21\xF9\x04\x01\x00\x00\x00\x00\x2C\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4C\x01\x00\x3B'
+    return Response(content=transparent_pixel, media_type="image/gif")
