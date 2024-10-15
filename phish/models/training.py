@@ -40,6 +40,7 @@ class Training(Base):
     presentation = Column(String)
     preview = Column(String)
 
+
     info = relationship("TrainingInformation", back_populates="trainings")
 
 

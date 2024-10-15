@@ -41,4 +41,3 @@ class TrainingResponse(TrainingBase):
 
 class TrainingPatch(TrainingBase):
     info: Optional[TrainingInformationBase] = None
-

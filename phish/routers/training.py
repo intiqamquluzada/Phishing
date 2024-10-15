@@ -51,7 +51,7 @@ def create_new_training(
         presentation: UploadFile = File(None),
         questions: List[str] = Form(...),
         db: Session = Depends(get_db),
-        user: UserModel = Depends(require_role(TrainType.ADMIN)),
+        user: UserModel = Depends(require_role(TrainType.ADMIN.value)),
         request: Request = None
 ):
 
@@ -101,7 +101,7 @@ def update_training_by_id(training_id: int,
                           questions: List[str] = Form(...),
                           db: Session = Depends(get_db),
                           request: Request = None,
-                          user: UserModel = Depends(require_role(TrainType.ADMIN))
+                          user: UserModel = Depends(require_role(TrainType.ADMIN.value))
                           ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
@@ -153,7 +153,7 @@ def partially_update_training(training_id: int,
                               questions: List[str] = Form(...),
                               db: Session = Depends(get_db),
                               request: Request = None,
-                              user: UserModel = Depends(require_role(TrainType.ADMIN))
+                              user: UserModel = Depends(require_role(TrainType.ADMIN.value))
                               ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
@@ -202,7 +202,7 @@ def partially_update_training(training_id: int,
 
 @router.delete("/delete/{training_id}", response_model=dict, summary="Delete a training")
 def delete_training(training_id: int, db: Session = Depends(get_db),
-                    user: UserModel = Depends(require_role(TrainType.ADMIN))
+                    user: UserModel = Depends(require_role(TrainType.ADMIN.value))
                     ):
     training = db.query(Training).filter(Training.id == training_id).first()
 
