@@ -19,7 +19,8 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     verification_code = Column(String)
-    role = Column(Enum(RoleType), nullable=False)
+    # role = Column(Enum(RoleType), nullable=False)
+    roles = relationship("Role", back_populates="user", foreign_keys="[Role.user_id]")
     administration = relationship("Administration", back_populates="user", uselist=False, foreign_keys="[Administration.user_id]")
     invite = relationship("Invite", back_populates="user", foreign_keys="[Invite.user_id]")
 

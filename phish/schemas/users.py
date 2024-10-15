@@ -28,17 +28,17 @@ class ForgotPasswordConfirm(BaseModel):
 
 class User(UserBase):
     id: int
-    role: str
+    # roles: str
 
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
 
-    @classmethod
-    def from_orm(cls, obj):
-        obj_dict = obj.__dict__.copy()
-        obj_dict['role'] = obj.role.value
-        return cls(**obj_dict)
+    # @classmethod
+    # def from_orm(cls, obj):
+    #     obj_dict = obj.__dict__.copy()
+    #     obj_dict['role'] = obj.role.value
+    #     return cls(**obj_dict)
 
 
 class Token(BaseModel):
