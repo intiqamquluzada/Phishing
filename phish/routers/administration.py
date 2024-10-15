@@ -11,7 +11,7 @@ from phish.schemas.administration import (AdministrationBase, AdministrationUpda
                                           AdministrationPatch, AdministrationResponse,
                                           SendInvite)
 from phish.utils.uid import encode_uid, decode_uid
-from phish.utils.email_sender import send_email
+from phish.utils.email_sender import send_email_with_tracking
 from enum import Enum as PyEnum
 from typing import List
 import uuid

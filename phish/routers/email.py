@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 from typing import List
 from uuid import uuid4
 
-from phish.dependencies import get_db
-from phish.external_services.inject_tracking import inject_tracking_pixel
+from phish.dependencies import get_db, ConnectionManager
+from phish.external_services.inject_tracking import inject_tracking_pixel_and_links
 from phish.models.email import EmailTemplate, EmailReadEvent
 from phish.schemas.email import EmailDifficulty, EmailTemplateResponse
+from phish.utils.email_sender import send_email_with_tracking
 from phish.utils.files import save_file
 
 router = APIRouter(
@@ -15,17 +16,17 @@ router = APIRouter(
     tags=["Email Templates"]
 )
 
-connected_clients: List[WebSocket] = []
-
+manager = ConnectionManager()
 @router.websocket("/ws/email-tracker")
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    connected_clients.append(websocket)
+    await manager.connect(websocket)  # Use connection manager to handle WebSocket connections
     try:
         while True:
-            await websocket.receive_text()  # You can handle messages if needed
+            await websocket.receive_text()  # You can handle incoming WebSocket messages here if needed
     except WebSocketDisconnect:
-        connected_clients.remove(websocket)
+        manager.disconnect(websocket)
+
+
 
 
 @router.get("/",
@@ -59,7 +60,6 @@ async def create_template(name: str = Form(...),
                           file: UploadFile = File(None),
                           request: Request = None,
                           db: Session = Depends(get_db)):
-
     save_location = save_file(file, request)
     unique_uuid = str(uuid4())
 
@@ -73,7 +73,7 @@ async def create_template(name: str = Form(...),
     )
 
     # Inject the tracking pixel
-    new_template.body = inject_tracking_pixel(new_template.body, new_template.id, unique_uuid)
+    new_template.body = inject_tracking_pixel_and_links(new_template.body, new_template.id, unique_uuid)
 
     db.add(new_template)
     db.commit()
@@ -169,17 +169,42 @@ async def delete_template(template_id: int, db: Session = Depends(get_db)):
     return JSONResponse(status_code=200, content=content)
 
 
+from fastapi import Query
+from fastapi.responses import RedirectResponse
+
+
+@router.post("/send/{template_id}")
+async def send_template_email(template_id: int, recipients: List[str], db: Session = Depends(get_db)):
+    unique_uuid = str(uuid4())
+    print("UNIQUE ID: ", unique_uuid)
+    await manager.broadcast("Yolladig brat")
+
+    try:
+        await send_email_with_tracking(template_id, db, recipients, unique_uuid)
+        return {"message": "Email sent successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/track/{template_id}")
 async def track_email_read(template_id: int, uuid: str, db: Session = Depends(get_db)):
-    # Log the email read event
+    print(f"Tracking pixel triggered for template {template_id} with UUID {uuid}")  # Debug
+
     email_read_event = EmailReadEvent(template_id=template_id, uuid=uuid)
     db.add(email_read_event)
     db.commit()
 
-    # Notify all connected WebSocket clients
-    for client in connected_clients:
-        await client.send_text(f"Email template {template_id} was read (UUID: {uuid})")
+    await manager.broadcast(f"Email template {template_id} was opened (UUID: {uuid})")
 
-    # Serve a transparent 1x1 pixel image
     transparent_pixel = b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF\x21\xF9\x04\x01\x00\x00\x00\x00\x2C\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4C\x01\x00\x3B'
     return Response(content=transparent_pixel, media_type="image/gif")
+
+
+
+
+
+@router.get("/click/{template_id}")
+async def track_link_click(template_id: int, uuid: str, url: str, db: Session = Depends(get_db)):
+    await manager.broadcast(f"Email template {template_id} link clicked (UUID: {uuid}) URL: {url}")
+
+    return RedirectResponse(url=url)

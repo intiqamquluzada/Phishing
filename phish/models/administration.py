@@ -34,4 +34,5 @@ class Invite(Base):
     campaign = relationship("Campaign", back_populates="invite")
     verification_code = Column(String)
 
+
 Base.metadata.create_all(bind=engine)

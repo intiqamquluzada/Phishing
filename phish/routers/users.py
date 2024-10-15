@@ -10,7 +10,7 @@ from phish.models.users import User as UserModel
 from phish.schemas.users import User, UserCreate, ForgotPassword, ForgotPasswordConfirm, Token, TokenData
 import sqlalchemy
 from phish.utils.uid import encode_uid, decode_uid
-from phish.utils.email_sender import send_email
+from phish.utils.email_sender import send_email_with_tracking
 import uuid
 from fastapi.responses import JSONResponse
 
