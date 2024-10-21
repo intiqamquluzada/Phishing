@@ -18,7 +18,7 @@ def save_file(file, request: Request):
             shutil.copyfileobj(file.file, f)
 
         base_url = str(request.base_url)
-        file_url = urljoin(base_url, file_name)
+        file_url = urljoin(base_url, file_location)
 
         return file_url
     return None
