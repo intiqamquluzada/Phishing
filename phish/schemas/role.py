@@ -1,9 +1,8 @@
 from pydantic import BaseModel, validator
 from enum import Enum as PyEnum
-from phish.models.role import Role
 from datetime import datetime
 from typing import Optional, Union, List
-from phish.schemas.users import User
+# from phish.schemas.users import User
 
 
 class Permission(PyEnum):
@@ -16,7 +15,6 @@ class RoleBase(BaseModel):
     name: str
     description: str
     permission: List[Permission]
-    user_id: int
 
     class Config:
         orm_mode = True
@@ -26,7 +24,6 @@ class RolePatch(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     permission: Optional[List[Permission]] = None
-    user_id: Optional[int] = None
 
     class Config:
         orm_mode = True
@@ -41,7 +38,7 @@ class RolePatch(BaseModel):
 class RoleResponse(RoleBase):
     id: int
     created_at: datetime
-    user: User
+    # user: List[User]
 
     class Config:
         orm_mode = True

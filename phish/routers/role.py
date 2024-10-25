@@ -56,7 +56,6 @@ async def create_role(role: RoleBase, db: Session = Depends(get_db)):
     role_create = Role(
         name=role.name,
         description=role.description,
-        user_id=role.user_id,
     )
 
     role_create.set_permissions([perm.value for perm in role.permission])
@@ -79,7 +78,6 @@ async def update_role(role_id: int, role_update: RoleBase,
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    role.user_id = role_update.user_id
     role.name = role_update.name
     role.description = role_update.description
 
@@ -102,8 +100,6 @@ async def update_role_patch(role_id: int, role_update: RolePatch,
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    if role_update.user_id is not None:
-        role.user_id = role_update.user_id
     if role_update.name is not None:
         role.name = role_update.name
     if role_update.description is not None:
@@ -123,7 +119,7 @@ async def update_role_patch(role_id: int, role_update: RolePatch,
                summary="Delete role",
                description="Delete role")
 async def delete_role(role_id: int, db: Session = Depends(get_db)):
-    role = db.query(Role).filter(Role.id == role_id).first()
+    role = db.query(Role).filter(Role.id==role_id).first()
 
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
