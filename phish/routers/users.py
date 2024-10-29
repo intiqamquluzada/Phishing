@@ -8,9 +8,10 @@ from phish.routers import auth
 
 from phish.models.users import User as UserModel
 from phish.schemas.users import User, UserCreate, ForgotPassword, ForgotPasswordConfirm, Token, TokenData
+from phish.models.role import Role
 import sqlalchemy
 from phish.utils.uid import encode_uid, decode_uid
-from phish.utils.email_sender import send_email_with_tracking
+from phish.utils.email_sender import send_email_with_tracking, send_email
 import uuid
 from fastapi.responses import JSONResponse
 
@@ -27,11 +28,15 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         UserModel.email == user.email
     ).first()
 
+    db_role = db.query(Role).filter(Role.id == user.role_id).first()
+
     if db_user:
         return JSONResponse(status_code=400, content={"message": "Email already registered"})
+    if not db_role:
+        return JSONResponse(status_code=404, content={"message": "Role not found"})
 
     hashed_password = auth.get_password_hash(user.password)
-    db_user = UserModel(email=user.email, hashed_password=hashed_password, role=user.role)
+    db_user = UserModel(email=user.email, hashed_password=hashed_password, role=db_role)
     try:
         db.add(db_user)
         db.commit()
@@ -52,8 +57,9 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     access_token_expires = timedelta(days=auth.ACCESS_TOKEN_EXPIRE_DAYS)
-    access_token = auth.create_access_token(data={"sub": user.email, "role": user.role.value}, expires_delta=access_token_expires)  # Include role in token
+    access_token = auth.create_access_token(data={"sub": user.email, "role_id": user.role_id}, expires_delta=access_token_expires)  # Include role in token
     refresh_token_expires = timedelta(days=auth.REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = auth.create_refresh_token(data={"sub": user.email}, expires_delta=refresh_token_expires)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}

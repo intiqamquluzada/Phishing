@@ -12,6 +12,7 @@ from fastapi.security import OAuth2PasswordBearer
 from phish.schemas.users import User as UserScheme
 
 from phish.schemas.users import TokenData
+from phish.models.role import Role
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -93,23 +94,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        role: str = payload.get("role")  # Extract role from token
+        role_id: int = payload.get("role_id")
 
-        # Log or print the payload for debugging
-        print(f"Decoded token payload: {payload}")
-
-        if email is None or role is None:
+        if email is None or role_id is None:
+            print("Missing email or role_id in the token payload")
             raise credentials_exception
 
         token_data = TokenData(email=email)
     except JWTError as e:
-        print(f"JWT Error: {e}")  # Log the error for debugging
+        print(f"JWT Error: {e}")
         raise credentials_exception
 
-    user = get_user_by_email(email=token_data.email, db=db)
+    user = db.query(User).filter(User.email == token_data.email).first()
     if user is None:
         raise credentials_exception
 
-    # Add role to user object if it exists
-    user.role = role  # If not stored in DB, use the role from the token
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if role is None:
+        raise credentials_exception
+
+    user.role = role
     return user
+
+

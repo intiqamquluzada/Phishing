@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from .routers import users, training, email, target, administration
+from .routers import users, training, email, target, administration, role
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from .routers.email import manager
@@ -52,5 +52,6 @@ app.include_router(training.router)
 app.include_router(email.router)
 app.include_router(target.router)
 app.include_router(administration.router)
+app.include_router(role.router)
 
 app.include_router(static_router, prefix="/api")

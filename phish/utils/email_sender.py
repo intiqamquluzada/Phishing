@@ -36,3 +36,14 @@ async def send_email_with_tracking(template_id: int, db: Session, recipients: Li
 
     fm = FastMail(conf)
     await fm.send_message(message)
+
+
+async def send_email(subject: str, recipients: List[str], message: str):
+    message = MessageSchema(
+        subject=subject,
+        recipients=recipients,
+        body=message,
+        subtype="html")
+
+    fm = FastMail(conf)
+    await fm.send_message(message)
