@@ -1,4 +1,5 @@
 from typing import List
+import json
 
 import sqlalchemy
 from fastapi import (APIRouter, Depends, HTTPException, status,
@@ -54,7 +55,6 @@ def create_new_training(
         user: UserModel = Depends(require_role(TrainType.ADMIN.value)),
         request: Request = None
 ):
-
     training_info = TrainingInformation(
         question_count=len(questions),
         pages_count=pages_count,
@@ -66,7 +66,7 @@ def create_new_training(
 
     for question in questions:
         create_question = Question(
-            question=question,
+            question=json.dumps(question),  # Serialize question to JSON
             training_information_id=training_info.id
         )
         db.add(create_question)
