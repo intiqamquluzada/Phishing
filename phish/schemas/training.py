@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional
 from typing import Optional, List
-
+from pydantic import validator
+import json
 
 class QuestionBase(BaseModel):
     question: str
@@ -9,6 +10,12 @@ class QuestionBase(BaseModel):
 
 class QuestionResponse(QuestionBase):
     id: int
+
+    @validator("question", pre=True)
+    def parse_question(cls, value):
+        if isinstance(value, str):
+            return json.loads(value)  # Deserialize JSON string to list
+        return value
 
 
 class TrainingInformationBase(BaseModel):
