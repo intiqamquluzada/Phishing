@@ -4,18 +4,20 @@ from typing import Optional, List
 from pydantic import validator
 import json
 
+
+
 class QuestionBase(BaseModel):
     question: str
 
 
-class QuestionResponse(QuestionBase):
+class QuestionResponse(BaseModel):
     id: int
+    question: str
 
     @validator("question", pre=True)
     def parse_question(cls, value):
-        if isinstance(value, str):
-            return json.loads(value)  # Deserialize JSON string to list
-        return value
+        return value.strip()
+
 
 
 class TrainingInformationBase(BaseModel):
