@@ -1,7 +1,7 @@
 
 from pydantic import BaseModel
 from typing import Optional
-
+from phish.schemas.role import RoleResponse
 
 class UserBase(BaseModel):
     email: str
@@ -9,12 +9,12 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role: str
+    role_id: int
 
 
 class UserPatch(UserBase):
     password: Optional[str]
-    role: Optional[str]
+    role_id: Optional[int]
 
 
 class ForgotPassword(BaseModel):
@@ -28,17 +28,16 @@ class ForgotPasswordConfirm(BaseModel):
 
 class User(UserBase):
     id: int
-    # roles: str
+    role: RoleResponse
 
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
 
-    # @classmethod
-    # def from_orm(cls, obj):
-    #     obj_dict = obj.__dict__.copy()
-    #     obj_dict['role'] = obj.role.value
-    #     return cls(**obj_dict)
+
+# from phish.schemas.role import RoleResponse
+#
+# User.update_forward_refs()
 
 
 class Token(BaseModel):

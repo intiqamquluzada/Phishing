@@ -12,8 +12,7 @@ class Role(Base):
     name = Column(String)
     description = Column(String)
     permission = Column(String)
-    user_id = Column(Integer, ForeignKey("user.id"))
-    user = relationship("User", back_populates="roles")
+    users = relationship("User", back_populates="role")
     created_at = Column(DateTime, server_default=func.now())
 
     def set_permissions(self, permissions: List[str]):

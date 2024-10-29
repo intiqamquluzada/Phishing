@@ -1,14 +1,23 @@
 from pydantic import BaseModel
 from typing import Optional
 from typing import Optional, List
+from pydantic import validator
+import json
+
 
 
 class QuestionBase(BaseModel):
     question: str
 
 
-class QuestionResponse(QuestionBase):
+class QuestionResponse(BaseModel):
     id: int
+    question: str
+
+    @validator("question", pre=True)
+    def parse_question(cls, value):
+        return value.strip()
+
 
 
 class TrainingInformationBase(BaseModel):
