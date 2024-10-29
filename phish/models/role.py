@@ -22,4 +22,5 @@ class Role(Base):
     def get_permissions(self) -> List[str]:
         return self.permission.split(',') if self.permission else []
 
+
 Base.metadata.create_all(bind=engine)
