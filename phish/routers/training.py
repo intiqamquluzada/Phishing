@@ -51,7 +51,7 @@ def create_new_training(
         presentation: UploadFile = File(None),
         questions: List[str] = Form(...),
         db: Session = Depends(get_db),
-        user: UserModel = Depends(require_role(TrainType.ADMIN.value)),
+        # user: UserModel = Depends(require_role(TrainType.ADMIN.value)),
         request: Request = None
 ):
 
@@ -63,6 +63,8 @@ def create_new_training(
     db.add(training_info)
     db.commit()
     db.refresh(training_info)
+
+    questions = questions[0].split(",")
 
     for question in questions:
         create_question = Question(
