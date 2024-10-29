@@ -31,9 +31,10 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     return {"error": "User not found"}
 
 
-def require_role(required_role: TypeOfTraining):
+def require_role(required_role: int):
     def role_dependency(user: User = Depends(get_current_user)):
         if not user.role or user.role.name != required_role:
+
             raise HTTPException(status_code=403, detail="Operation not permitted")
 
         return user

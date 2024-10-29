@@ -52,7 +52,7 @@ def create_new_training(
         presentation: UploadFile = File(None),
         questions: List[str] = Form(...),
         db: Session = Depends(get_db),
-        user: UserModel = Depends(require_role(TrainType.ADMIN.value)),
+        user: UserModel = Depends(require_role(1)),
         request: Request = None
 ):
     training_info = TrainingInformation(
