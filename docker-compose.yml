@@ -3,8 +3,12 @@ version: '3'
 services:
   web:
     build: .
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"
+    volumes:
+      - .:/app
+      - db_data:/sql_app.db
+
+    command: uvicorn phish.main:app --host 0.0.0.0 --port 8000 --reload
+volumes:
+  db_data:
