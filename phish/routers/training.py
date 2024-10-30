@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import (APIRouter, Depends, HTTPException, status,
+from fastapi import (APIRouter, Depends, HTTPException, Query,
                      Form, Request, UploadFile, File)
 from sqlalchemy.orm import Session
 
@@ -30,8 +30,11 @@ async def get_questions(db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[TrainingResponse],
             summary="List of trainings", description="Fetches a list of trainings")
-async def get_trainings(db: Session = Depends(get_db)):
-    trainings = db.query(Training).all()
+async def get_trainings(db: Session = Depends(get_db),
+                        limit: int = Query(10, description="Number of trainings to retrieve"),
+                        offset: int = Query(0, description="Offset from the start")
+                        ):
+    trainings = db.query(Training).offset(offset).limit(limit).all()
     if not trainings:
         raise HTTPException(status_code=404, detail="No trainings found")
 
@@ -80,6 +83,9 @@ def create_new_training(
         presentation: UploadFile = File(None),
         questions: List[str] = Form(...),
         db: Session = Depends(get_db),
+
+        # user: UserModel = Depends(require_role(1)),
+
         request: Request = None
 ):
     training_info = TrainingInformation(
