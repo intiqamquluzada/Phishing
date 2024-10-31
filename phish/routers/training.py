@@ -172,21 +172,27 @@ def update_training_by_id(training_id: int,
                           questions: List[str] = Form(...),
                           db: Session = Depends(get_db),
                           request: Request = None,
-                          user: UserModel = Depends(require_role(1))
+                          # user: UserModel = Depends(require_role(1))
                           ):
     training = db.query(Training).filter(Training.id == training_id).first()
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    save_preview_location = save_file(preview, request)
-    save_presentation_location = save_file(presentation, request)
+    save_preview_location = save_file(preview, request) if preview else training.preview
+    save_presentation_location = save_file(presentation, request) if presentation else training.presentation
+
+    training.module_name = module_name
+    training.passing_score = passing_score
+    training.preview = save_preview_location
+    training.presentation = save_presentation_location
 
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
 
-    db.query(Question).filter(Question.training_information_id == training_info.id).delete(synchronize_session=False)
-    db.commit()
+    training_info.pages_count = pages_count
 
+    db.query(Question).filter(Question.training_information_id == training_info.id).delete(synchronize_session=False)
+    stored_questions = []
     for question_text in questions:
         trimmed_question = question_text.strip()
         if trimmed_question:
@@ -195,45 +201,61 @@ def update_training_by_id(training_id: int,
                 training_information_id=training_info.id
             )
             db.add(create_question)
+            stored_questions.append(create_question)
 
-    training_info.question_count = len(questions)
-    training_info.pages_count = pages_count
-
-    db.commit()
-
-    training.module_name = module_name
-    training.passing_score = passing_score
-    training.preview = save_preview_location if preview else None
-    training.presentation = save_presentation_location if presentation else None
-
+    training_info.question_count = len(stored_questions)
     db.commit()
     db.refresh(training)
 
-    return training
+    return TrainingResponse(
+        id=training.id,
+        module_name=training.module_name,
+        passing_score=training.passing_score,
+        preview=training.preview,
+        presentation=training.presentation,
+        info=TrainingInformationBase(
+            question_count=training_info.question_count,
+            pages_count=training_info.pages_count,
+            question=[QuestionResponse(id=q.id, question=q.question) for q in stored_questions]
+        ),
+    )
 
 
 @router.patch("/update/{training_id}", response_model=TrainingResponse, summary="Partially update a training")
 def partially_update_training(training_id: int,
-                              module_name: str = Form(None),
-                              passing_score: int = Form(None),
-                              pages_count: int = Form(None),
-                              preview: UploadFile = File(None),
-                              presentation: UploadFile = File(None),
-                              questions: List[str] = Form(None),
+                              module_name: Optional[str] = Form(None),
+                              passing_score: Optional[int] = Form(None),
+                              pages_count: Optional[int] = Form(None),
+                              preview: Optional[UploadFile] = File(None),
+                              presentation: Optional[UploadFile] = File(None),
+                              questions: Optional[List[str]] = Form(None),
                               db: Session = Depends(get_db),
                               request: Request = None,
-                              user: UserModel = Depends(require_role(TrainType.ADMIN.value))
+                              # user: UserModel = Depends(require_role(1))
                               ):
     training = db.query(Training).filter(Training.id == training_id).first()
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
 
+    if module_name:
+        training.module_name = module_name
+    if passing_score:
+        training.passing_score = passing_score
+    if preview:
+        training.preview = save_file(preview, request)
+    if presentation:
+        training.presentation = save_file(presentation, request)
+
+    training_info = db.query(TrainingInformation).filter(
+        TrainingInformation.id == training.training_information).first()
+
+    if pages_count:
+        training_info.pages_count = pages_count
+
     if questions is not None:
-        training_info = db.query(TrainingInformation).filter(
-            TrainingInformation.id == training.training_information).first()
         db.query(Question).filter(Question.training_information_id == training_info.id).delete(
             synchronize_session=False)
-
+        stored_questions = []
         for question_text in questions:
             trimmed_question = question_text.strip()
             if trimmed_question:
@@ -242,24 +264,24 @@ def partially_update_training(training_id: int,
                     training_information_id=training_info.id
                 )
                 db.add(create_question)
-
-        training_info.question_count = len(questions)
-
-    if module_name is not None:
-        training.module_name = module_name
-    if passing_score is not None:
-        training.passing_score = passing_score
-    if preview is not None:
-        training.preview = save_file(preview, request)
-    if presentation is not None:
-        training.presentation = save_file(presentation, request)
-    if pages_count is not None:
-        training_info.pages_count = pages_count
+                stored_questions.append(create_question)
+        training_info.question_count = len(stored_questions)
 
     db.commit()
     db.refresh(training)
 
-    return training
+    return TrainingResponse(
+        id=training.id,
+        module_name=training.module_name,
+        passing_score=training.passing_score,
+        preview=training.preview,
+        presentation=training.presentation,
+        info=TrainingInformationBase(
+            question_count=training_info.question_count,
+            pages_count=training_info.pages_count,
+            question=[QuestionResponse(id=q.id, question=q.question) for q in stored_questions]
+        ),
+    )
 
 
 @router.delete("/delete/{training_id}", response_model=dict, summary="Delete a training")

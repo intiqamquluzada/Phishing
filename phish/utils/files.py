@@ -6,7 +6,6 @@ from phish.utils.generator import generate_short_uuid
 from phish import main
 
 
-# save the file and return its location
 def save_file(file, request: Request):
     if file:
         os.makedirs(main.upload_folder, exist_ok=True)
