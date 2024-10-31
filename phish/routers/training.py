@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Dict, Any, Optional
 from fastapi import (APIRouter, Depends, HTTPException, Query,
                      Form, Request, UploadFile, File)
 from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
 
 from phish.utils.files import save_file
 from phish.dependencies import get_db
@@ -28,13 +29,28 @@ async def get_questions(db: Session = Depends(get_db)):
     return [QuestionResponse(id=question.id, question=question.question) for question in questions]
 
 
-@router.get("/", response_model=List[TrainingResponse],
+@router.get("/", response_model=Dict[str, Any],
             summary="List of trainings", description="Fetches a list of trainings")
 async def get_trainings(db: Session = Depends(get_db),
                         limit: int = Query(10, description="Number of trainings to retrieve"),
-                        offset: int = Query(0, description="Offset from the start")
+                        offset: int = Query(0, description="Offset from the start"),
+                        order_by: Optional[str] = Query("ma",
+                                                        description="Order by 'ma', 'md', 'pa', or 'pd'")
+
                         ):
-    trainings = db.query(Training).offset(offset).limit(limit).all()
+    query = db.query(Training)
+    if order_by == "ma":
+        query = query.order_by(asc(Training.module_name))
+    elif order_by == "md":
+        query = query.order_by(desc(Training.module_name))
+    elif order_by == "pa":
+        query = query.order_by(asc(Training.passing_score))
+    elif order_by == "pd":
+        query = query.order_by(desc(Training.passing_score))
+
+    total_trainings = query.count()
+    trainings = query.offset(offset).limit(limit).all()
+
     if not trainings:
         raise HTTPException(status_code=404, detail="No trainings found")
 
@@ -58,8 +74,10 @@ async def get_trainings(db: Session = Depends(get_db),
             ),
         )
         training_responses.append(training_response)
-
-    return training_responses
+    return {
+        "total_count": total_trainings,
+        "trainings": training_responses
+    }
 
 
 @router.get("/detail/{training_id}/",
