@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 from fastapi import (APIRouter, Depends, HTTPException, Query,
                      Form, Request, UploadFile, File)
 from sqlalchemy.orm import Session
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, func
 
 from phish.utils.files import save_file
 from phish.dependencies import get_db
@@ -40,9 +40,9 @@ async def get_trainings(db: Session = Depends(get_db),
                         ):
     query = db.query(Training)
     if order_by == "ma":
-        query = query.order_by(asc(Training.module_name))
+        query = query.order_by(asc(func.lower(Training.module_name)))
     elif order_by == "md":
-        query = query.order_by(desc(Training.module_name))
+        query = query.order_by(desc(func.lower(Training.module_name)))
     elif order_by == "pa":
         query = query.order_by(asc(Training.passing_score))
     elif order_by == "pd":
@@ -171,9 +171,7 @@ def update_training_by_id(training_id: int,
                           presentation: UploadFile = File(None),
                           questions: List[str] = Form(...),
                           db: Session = Depends(get_db),
-                          request: Request = None,
-                          # user: UserModel = Depends(require_role(1))
-                          ):
+                          request: Request = None):
     training = db.query(Training).filter(Training.id == training_id).first()
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
@@ -230,9 +228,7 @@ def partially_update_training(training_id: int,
                               presentation: Optional[UploadFile] = File(None),
                               questions: Optional[List[str]] = Form(None),
                               db: Session = Depends(get_db),
-                              request: Request = None,
-                              # user: UserModel = Depends(require_role(1))
-                              ):
+                              request: Request = None):
     training = db.query(Training).filter(Training.id == training_id).first()
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
@@ -252,10 +248,11 @@ def partially_update_training(training_id: int,
     if pages_count:
         training_info.pages_count = pages_count
 
+    # Initialize stored_questions outside of the questions check to avoid UnboundLocalError
+    stored_questions = []
     if questions is not None:
         db.query(Question).filter(Question.training_information_id == training_info.id).delete(
             synchronize_session=False)
-        stored_questions = []
         for question_text in questions:
             trimmed_question = question_text.strip()
             if trimmed_question:
@@ -282,6 +279,7 @@ def partially_update_training(training_id: int,
             question=[QuestionResponse(id=q.id, question=q.question) for q in stored_questions]
         ),
     )
+
 
 
 @router.delete("/delete/{training_id}", response_model=dict, summary="Delete a training")
