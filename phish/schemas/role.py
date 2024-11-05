@@ -20,6 +20,7 @@ class RoleBase(BaseModel):
 class RoleCreateBase(BaseModel):
     name: str
     description: Optional[str] = None
+    permissions: Optional[List[Permission]] = None
 
     class Config:
         orm_mode = True

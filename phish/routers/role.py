@@ -80,9 +80,8 @@ async def create_role(role: RoleCreateBase, db: Session = Depends(get_db)):
     )
 
     # Set permissions if provided in the request
-    # Note: Assuming role.permission is optional in RoleCreateBase
-    if hasattr(role, 'permission') and role.permission:
-        role_create.set_permissions([perm.value for perm in role.permission])
+    if role.permissions:  # Check if permissions are provided
+        role_create.set_permissions([perm.value for perm in role.permissions])  # Use the permission values
 
     # Add the new role to the database
     db.add(role_create)
@@ -97,7 +96,6 @@ async def create_role(role: RoleCreateBase, db: Session = Depends(get_db)):
         created_at=role_create.created_at,
         permissions=role_create.get_permission()  # Get permissions for the response
     )
-
 
 
 @router.put("/update/{role_id}",
