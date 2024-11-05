@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
 from fastapi import (APIRouter, Depends, HTTPException, Query,
-                     Form, Request, UploadFile, File)
+                     Form, Request, UploadFile, File, Body)
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, func
 
@@ -220,22 +220,24 @@ def update_training_by_id(training_id: int,
 
 
 @router.patch("/update/{training_id}", response_model=TrainingResponse, summary="Partially update a training")
-def partially_update_training(training_id: int,
-                              module_name: Optional[str] = Form(None),
-                              passing_score: Optional[int] = Form(None),
-                              pages_count: Optional[int] = Form(None),
-                              preview: Optional[UploadFile] = File(None),
-                              presentation: Optional[UploadFile] = File(None),
-                              questions: Optional[List[str]] = Form(None),
-                              db: Session = Depends(get_db),
-                              request: Request = None):
+def partially_update_training(
+        training_id: int,
+        module_name: Optional[str] = Form(None),
+        passing_score: Optional[int] = Form(None),
+        pages_count: Optional[int] = Form(None),
+        preview: Optional[UploadFile] = File(None),
+        presentation: Optional[UploadFile] = File(None),
+        questions: List[str] = Form(None),
+        db: Session = Depends(get_db),
+        request: Request = None
+):
     training = db.query(Training).filter(Training.id == training_id).first()
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    if module_name:
+    if module_name is not None:
         training.module_name = module_name
-    if passing_score:
+    if passing_score is not None:
         training.passing_score = passing_score
     if preview:
         training.preview = save_file(preview, request)
@@ -245,23 +247,36 @@ def partially_update_training(training_id: int,
     training_info = db.query(TrainingInformation).filter(
         TrainingInformation.id == training.training_information).first()
 
-    if pages_count:
+    if training_info is None:
+        raise HTTPException(status_code=404, detail="Training information not found")
+
+    if pages_count is not None:
         training_info.pages_count = pages_count
 
-    # Initialize stored_questions outside of the questions check to avoid UnboundLocalError
+
+    db.add(training_info)
+    db.commit()
+    db.refresh(training_info)
+
     stored_questions = []
+
     if questions is not None:
         db.query(Question).filter(Question.training_information_id == training_info.id).delete(
             synchronize_session=False)
+
         for question_text in questions:
-            trimmed_question = question_text.strip()
-            if trimmed_question:
-                create_question = Question(
-                    question=trimmed_question,
-                    training_information_id=training_info.id
-                )
-                db.add(create_question)
-                stored_questions.append(create_question)
+            question_parts = question_text.split(',')
+            for part in question_parts:
+                trimmed_question = part.strip()
+                if trimmed_question:
+                    create_question = Question(
+                        question=trimmed_question,
+                        training_information_id=training_info.id
+                    )
+                    db.add(create_question)
+                    db.commit()
+                    stored_questions.append(create_question)
+
         training_info.question_count = len(stored_questions)
 
     db.commit()
@@ -279,7 +294,6 @@ def partially_update_training(training_id: int,
             question=[QuestionResponse(id=q.id, question=q.question) for q in stored_questions]
         ),
     )
-
 
 
 @router.delete("/delete/{training_id}", response_model=dict, summary="Delete a training")
