@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum as PyEnum
-from phish.schemas.users import User, UserCreate, UserPatch
+from phish.schemas.users import User, UserCreate, UserPatch, UserBase, UserForAdminstration
 from typing import Optional
 
 
@@ -14,11 +14,11 @@ class AdministrationBase(BaseModel):
     status: Status
     is_active: bool
     user_id: int
-    campaign_id: int
-    user: User
+    user: UserForAdminstration
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class AdministrationUpdate(BaseModel):

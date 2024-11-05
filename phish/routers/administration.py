@@ -11,11 +11,10 @@ from phish.schemas.administration import (AdministrationBase, AdministrationUpda
                                           AdministrationPatch, AdministrationResponse,
                                           SendInvite)
 from phish.utils.uid import encode_uid, decode_uid
-from phish.utils.email_sender import send_email_with_tracking
+from phish.utils.email_sender import send_email_with_tracking, send_email
 from enum import Enum as PyEnum
 from typing import List
 import uuid
-
 
 router = APIRouter(
     prefix="/administration",
@@ -46,11 +45,10 @@ async def send_invite(email: SendInvite,
         raise HTTPException(status_code=404, detail="User not found")
 
     check_administration = db.query(Administration).filter(Administration.user_id == user.id).first()
-
     if check_administration:
-        if check_administration.status.value == "ACTIVE":
-            raise HTTPException(status_code=404, detail="User is already in campaign")
-        if check_administration.status.value == "INVITED":
+        if check_administration.status == "ACTIVE":
+            raise HTTPException(status_code=409, detail="User is already in campaign")
+        if check_administration.status == "INVITED":
             db.delete(check_administration)
             db.commit()
 
@@ -62,10 +60,8 @@ async def send_invite(email: SendInvite,
     scheme = request.url.scheme
     host = request.client.host
     domain_url = f"{scheme}://{host}"
-
     code = str(uuid.uuid4())
     uid = encode_uid(user.id)
-
     link = f"{domain_url}/invitation-request/{uid}/{code}"
     subject = "Invitation Request"
     recipient = email.email
@@ -73,28 +69,29 @@ async def send_invite(email: SendInvite,
 
     await send_email(subject, [recipient], message)
 
-    campaign_id = db.query(Administration).filter(Administration.user_id == current_user.id).first().campaign_id
+    # current_admin = db.query(Administration).filter(Administration.user_id == current_user.id).first()
+    # if not current_admin or not current_admin.campaign_id:
+    #     raise HTTPException(status_code=404, detail="Please create or assign a campaign before sending invites.")
+
+    # campaign_id = current_admin.campaign_id
 
     invite = Invite(
         user_id=user.id,
-        campaign_id=campaign_id,
         verification_code=code
     )
     db.add(invite)
     db.commit()
 
     name = user.email.split("@")[0]
-
     administration = Administration(
         name=name,
         status="INVITED",
         user_id=user.id,
-        campaign_id=campaign_id
     )
     db.add(administration)
     db.commit()
 
-    return JSONResponse({"message": "Invitation sent successfully"}, status_code=250)
+    return JSONResponse({"message": "Invitation sent successfully"}, status_code=200)
 
 
 @router.post("/get-invite")
@@ -118,7 +115,7 @@ async def get_invite(uid: str = Form(...),
         raise HTTPException(status_code=404, detail="User was not invited")
 
     if invite:
-        get_administration.status="ACTIVE"
+        get_administration.status = "ACTIVE"
         check = "accepted"
     else:
         db.delete(get_administration)
@@ -143,7 +140,7 @@ async def update_user(user_id: int, user_update: AdministrationUpdate, db: Sessi
         raise HTTPException(sttus_code=404, detail="User not found")
 
     existing_email = db.query(User).filter(not_(User.email == administrator.user.email)).filter(
-                                                User.email == user_update.user.email).first()
+        User.email == user_update.user.email).first()
 
     if existing_email:
         raise HTTPException(status_code=409, detail="This email already exists")
@@ -163,8 +160,8 @@ async def update_user(user_id: int, user_update: AdministrationUpdate, db: Sessi
 
 
 @router.patch("/update/user/{user_id}", response_model=AdministrationResponse,
-            summary="Update user",
-            description="Update user")
+              summary="Update user",
+              description="Update user")
 async def update_user_patch(user_id: int, user_update: AdministrationPatch, db: Session = Depends(get_db)):
     administrator = db.query(Administration).filter(Administration.user_id == user_id).first()
 
@@ -172,7 +169,7 @@ async def update_user_patch(user_id: int, user_update: AdministrationPatch, db: 
         raise HTTPException(sttus_code=404, detail="User not found")
 
     existing_email = db.query(User).filter(not_(User.email == administrator.user.email)).filter(
-                                                User.email == user_update.user.email).first()
+        User.email == user_update.user.email).first()
 
     if existing_email:
         raise HTTPException(status_code=409, detail="This email already exists")
@@ -186,8 +183,8 @@ async def update_user_patch(user_id: int, user_update: AdministrationPatch, db: 
     if user_update.user.password is not None:
         hashed_password = auth.get_password_hash(user_update.user.password)
         administrator.user.hashed_password = hashed_password
-    if user_update.user.role is not None:
-        administrator.user.role = user_update.user.role
+    if user_update.user.role_id is not None:
+        administrator.user.role_id = user_update.user.role_id
 
     db.commit()
     db.refresh(administrator)

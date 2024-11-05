@@ -1,7 +1,7 @@
-
 from pydantic import BaseModel
 from typing import Optional
-from phish.schemas.role import RoleResponse
+from phish.schemas.role import RoleResponse, RoleResponseForAdminstration
+
 
 class UserBase(BaseModel):
     email: str
@@ -35,9 +35,13 @@ class User(UserBase):
         arbitrary_types_allowed = True
 
 
-# from phish.schemas.role import RoleResponse
-#
-# User.update_forward_refs()
+class UserForAdminstration(UserBase):
+    id: int
+    role: RoleResponseForAdminstration
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
 
 
 class Token(BaseModel):

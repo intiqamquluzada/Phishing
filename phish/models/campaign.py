@@ -8,8 +8,8 @@ class Campaign(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-    administration = relationship("Administration", back_populates="campaign", foreign_keys="[Administration.campaign_id]")
-    invite = relationship("Invite", back_populates="campaign", foreign_keys="[Invite.campaign_id]")
+    # administration = relationship("Administration", back_populates="campaign", foreign_keys="[Administration.campaign_id]")
+    # invite = relationship("Invite", back_populates="campaign", foreign_keys="[Invite.campaign_id]")
 
 
 Base.metadata.create_all(bind=engine)
