@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
+
 from fastapi import (APIRouter, Depends, HTTPException, Form,
-                     UploadFile, File, Request)
+                     UploadFile, File, Request, Query)
 from fastapi.responses import JSONResponse
 from phish.dependencies import get_db
 from enum import Enum as PyEnum
-from phish.schemas.role import RoleBase, RoleResponse, Permission, RolePatch
+from typing import Dict, Any
+from phish.schemas.role import RoleBase, RoleResponse, Permission, RolePatch, RoleListResponse
 from phish.models.role import Role
 from phish.models.users import User
 from typing import List
@@ -17,16 +19,34 @@ router = APIRouter(
 
 
 @router.get("/",
-            response_model=List[RoleResponse],
-            summary="List of Role",
-            description="List of Role")
-async def role_list(db: Session = Depends(get_db)):
-    roles = db.query(Role).all()
+            response_model=RoleListResponse,
+            summary="List of Roles",
+            description="List of Roles")
+async def role_list(db: Session = Depends(get_db),
+                    limit: int = Query(10, description="Number of roles to retrieve"),
+                    offset: int = Query(0, description="Offset from the start")):
+    query = db.query(Role)
+    total_roles = query.count()
+    roles = query.offset(offset).limit(limit).all()
 
     if not roles:
-        raise HTTPException(status_code=404, detail="Role not found")
+        raise HTTPException(status_code=404, detail="Roles not found")
 
-    return roles
+    roles_response = []
+    for role in roles:
+        roles_response.append(
+            RoleResponse(
+                id=role.id,
+                name=role.name,
+                description=role.description,
+                created_at=role.created_at,
+                permissions=role.get_permission()  # Extract permissions correctly
+            )
+        )
+
+    return RoleListResponse(roles=roles_response, total_roles=total_roles)
+
+
 
 
 @router.get("/detail/{role_id}",

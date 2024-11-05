@@ -18,7 +18,7 @@ class Role(Base):
     def set_permissions(self, permissions: List[str]):
         self.permission = ','.join(permissions)
 
-    def get_permissions(self) -> List[str]:
+    def get_permission(self):
         return self.permission.split(',') if self.permission else []
 
 
