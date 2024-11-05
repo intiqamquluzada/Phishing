@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from phish.dependencies import get_db
 from enum import Enum as PyEnum
 from typing import Dict, Any
-from phish.schemas.role import RoleBase, RoleResponse, Permission, RolePatch, RoleListResponse
+from phish.schemas.role import RoleBase, RoleResponse, Permission, RolePatch, RoleListResponse, RoleCreateBase
 from phish.models.role import Role
 from phish.models.users import User
 from typing import List
@@ -72,19 +72,32 @@ async def permission_list():
              response_model=RoleResponse,
              summary="Create a Role",
              description="Create a Role")
-async def create_role(role: RoleBase, db: Session = Depends(get_db)):
+async def create_role(role: RoleCreateBase, db: Session = Depends(get_db)):
+    # Create the Role instance
     role_create = Role(
         name=role.name,
         description=role.description,
     )
 
-    role_create.set_permissions([perm.value for perm in role.permission])
+    # Set permissions if provided in the request
+    # Note: Assuming role.permission is optional in RoleCreateBase
+    if hasattr(role, 'permission') and role.permission:
+        role_create.set_permissions([perm.value for perm in role.permission])
 
+    # Add the new role to the database
     db.add(role_create)
     db.commit()
     db.refresh(role_create)
 
-    return role_create
+    # Create the response object
+    return RoleResponse(
+        id=role_create.id,
+        name=role_create.name,
+        description=role_create.description,
+        created_at=role_create.created_at,
+        permissions=role_create.get_permission()  # Get permissions for the response
+    )
+
 
 
 @router.put("/update/{role_id}",
@@ -125,13 +138,19 @@ async def update_role_patch(role_id: int, role_update: RolePatch,
     if role_update.description is not None:
         role.description = role_update.description
 
-    if len(role_update.permission) > 0:
-        role.set_permissions([perm.value for perm in role_update.permission])
+    if role_update.permissions:
+        role.set_permissions([perm.value for perm in role_update.permissions])
 
     db.commit()
     db.refresh(role)
 
-    return role
+    return RoleResponse(
+        id=role.id,
+        name=role.name,
+        description=role.description,
+        created_at=role.created_at,
+        permissions=role.get_permission()
+    )
 
 
 

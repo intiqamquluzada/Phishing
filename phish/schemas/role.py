@@ -15,15 +15,23 @@ class RoleBase(BaseModel):
 
     class Config:
         orm_mode = True
-        from_attributes = True  # Enable from_orm
+        from_attributes = True
 
-class RoleResponse(RoleBase):
-    created_at: datetime
-    permissions: List[Permission]  # Use the Permission enum here
+class RoleCreateBase(BaseModel):
+    name: str
+    description: Optional[str] = None
 
     class Config:
         orm_mode = True
-        from_attributes = True  # Enable from_orm
+        from_attributes = True
+
+class RoleResponse(RoleBase):
+    created_at: datetime
+    permissions: List[Permission]
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
     @validator('permissions', pre=True, always=True)
     def parse_permissions(cls, v):
