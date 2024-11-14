@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import not_
-from fastapi import APIRouter, Depends, HTTPException, Form, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Form, Query, Request
 from fastapi.responses import JSONResponse
 from phish.routers import auth
 from phish.dependencies import get_db
@@ -23,17 +23,31 @@ router = APIRouter(
 
 
 @router.get("/",
-            response_model=List[AdministrationResponse],
+            response_model=dict,
             summary="List of Users",
-            description="List of Users")
-async def administration_list(db: Session = Depends(get_db)):
-    administration = db.query(Administration).all()
+            description="List of Users with pagination and total count")
+async def administration_list(
+    db: Session = Depends(get_db),
+    limit: int = Query(10, description="Number of users to retrieve"),
+    offset: int = Query(0, description="Offset from the start")
+):
+    # Get the total count of administration entries
+    total_count = db.query(Administration).count()
 
-    if not administration:
+    # Apply limit and offset for pagination
+    administration_records = db.query(Administration).offset(offset).limit(limit).all()
+
+    if not administration_records:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return administration
+    # Convert each Administration record to an AdministrationResponse
+    administration = [AdministrationResponse.from_orm(record) for record in administration_records]
 
+    # Return both the total count and the paginated results
+    return {
+        "total_count": total_count,
+        "administration": administration
+    }
 
 @router.post("/send-invite")
 async def send_invite(email: SendInvite,
