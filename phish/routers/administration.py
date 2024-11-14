@@ -13,7 +13,7 @@ from phish.schemas.administration import (AdministrationBase, AdministrationUpda
 from phish.utils.uid import encode_uid, decode_uid
 from phish.utils.email_sender import send_email_with_tracking, send_email
 from enum import Enum as PyEnum
-from typing import List
+from typing import List, Optional
 import uuid
 
 router = APIRouter(
@@ -25,29 +25,31 @@ router = APIRouter(
 @router.get("/",
             response_model=dict,
             summary="List of Users",
-            description="List of Users with pagination and total count")
+            description="List of Users with pagination, total count, and optional name filter")
 async def administration_list(
-    db: Session = Depends(get_db),
-    limit: int = Query(10, description="Number of users to retrieve"),
-    offset: int = Query(0, description="Offset from the start")
+        db: Session = Depends(get_db),
+        limit: int = Query(10, description="Number of users to retrieve"),
+        offset: int = Query(0, description="Offset from the start"),
+        name: Optional[str] = Query(None, description="Filter by user name")
 ):
-    # Get the total count of administration entries
-    total_count = db.query(Administration).count()
+    query = db.query(Administration)
+    if name:
+        query = query.filter(Administration.name.ilike(f"%{name}%"))
 
-    # Apply limit and offset for pagination
-    administration_records = db.query(Administration).offset(offset).limit(limit).all()
+    total_count = query.count()
+
+    administration_records = query.offset(offset).limit(limit).all()
 
     if not administration_records:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Convert each Administration record to an AdministrationResponse
     administration = [AdministrationResponse.from_orm(record) for record in administration_records]
 
-    # Return both the total count and the paginated results
     return {
         "total_count": total_count,
         "administration": administration
     }
+
 
 @router.post("/send-invite")
 async def send_invite(email: SendInvite,
@@ -82,12 +84,6 @@ async def send_invite(email: SendInvite,
     message = f"Click on the link below to accept or decline the invitation: \n{link}"
 
     await send_email(subject, [recipient], message)
-
-    # current_admin = db.query(Administration).filter(Administration.user_id == current_user.id).first()
-    # if not current_admin or not current_admin.campaign_id:
-    #     raise HTTPException(status_code=404, detail="Please create or assign a campaign before sending invites.")
-
-    # campaign_id = current_admin.campaign_id
 
     invite = Invite(
         user_id=user.id,
