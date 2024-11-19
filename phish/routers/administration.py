@@ -3,7 +3,7 @@ from sqlalchemy import not_
 from fastapi import APIRouter, Depends, HTTPException, Form, Query, Request
 from fastapi.responses import JSONResponse
 from phish.routers import auth
-from phish.dependencies import get_db
+from ..database import get_db
 from phish.models.users import User
 from phish.routers.auth import get_user
 from phish.models.administration import Administration, Invite

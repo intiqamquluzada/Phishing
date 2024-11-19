@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 from phish.models.training import TypeOfTraining
-from phish.dependencies import get_db
+from ..database import get_db
 from phish.models.users import User
 from fastapi.security import OAuth2PasswordBearer
 from phish.schemas.users import User as UserScheme

@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from uuid import uuid4
 
-from phish.dependencies import get_db, ConnectionManager
+from phish.dependencies import  ConnectionManager
+from ..database import get_db
 from phish.external_services.inject_tracking import inject_tracking_pixel_and_links
 from phish.models.email import EmailTemplate, EmailReadEvent
 from phish.schemas.email import EmailDifficulty, EmailTemplateResponse

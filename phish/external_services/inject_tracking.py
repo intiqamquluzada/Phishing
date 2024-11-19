@@ -1,12 +1,8 @@
-# TRACKING_PIXEL_URL = "http://localhost:8000/email-templates/track/{template_id}?uuid={unique_uuid}"
-# TRACKING_LINK_URL = "http://localhost:8000/email-templates/click/{template_id}?uuid={unique_uuid}&url={original_url}"
-
 TRACKING_PIXEL_URL = "https://phish.intigam.online/email-templates/track/{template_id}?uuid={unique_uuid}"
 TRACKING_LINK_URL = "https://phish.intigam.online/email-templates/click/{template_id}?uuid={unique_uuid}&url={original_url}"
 
 
 def inject_tracking_pixel_and_links(body: str, template_id: int, uuid: str) -> str:
-    # Inject the tracking pixel
     pixel_url = TRACKING_PIXEL_URL.format(template_id=template_id, unique_uuid=uuid)
     print("SALAAAAM")
     print(body)

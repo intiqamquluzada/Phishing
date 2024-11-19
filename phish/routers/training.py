@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, func
 
 from phish.utils.files import save_file
-from phish.dependencies import get_db
+from ..database import get_db
 from phish.models.training import Training, TrainingInformation, Question
 from phish.models.training import TypeOfTraining as TrainType
 from phish.models.users import User as UserModel

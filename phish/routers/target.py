@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import JSONResponse
-from phish.dependencies import get_db
+from ..database import get_db
 from phish.models.target import Target, TargetUser
 from phish.schemas.target import (TargetBase, TargetUpdate, TargetUpdatePatch,
                                   TargetResponse, TargetUserBase, TargetUserPatch,

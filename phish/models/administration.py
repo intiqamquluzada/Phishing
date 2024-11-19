@@ -18,10 +18,9 @@ class Administration(Base):
     name = Column(String)
     status = Column(String)
     is_active = Column(Boolean, default=True)
+
     user_id = Column(Integer, ForeignKey("user.id"))
     user = relationship("User", back_populates="administration")
-    # campaign_id = Column(Integer, ForeignKey("campaign.id"))
-    # campaign = relationship("Campaign", back_populates="administration")
 
 
 class Invite(Base):
@@ -33,6 +32,7 @@ class Invite(Base):
     # campaign_id = Column(Integer, ForeignKey("campaign.id"))
     # campaign = relationship("Campaign", back_populates="invite")
     verification_code = Column(String)
+
 
 
 Base.metadata.create_all(bind=engine)

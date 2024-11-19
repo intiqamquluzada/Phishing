@@ -2,13 +2,11 @@ from .database import SessionLocal
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
 
+from fastapi import Depends, HTTPException, status
+from phish.models.users import User as UserModel
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
+
 
 
 class ConnectionManager:
@@ -25,5 +23,6 @@ class ConnectionManager:
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             await connection.send_text(message)
+
 
 
