@@ -160,13 +160,13 @@ def enable_mfa(user_id: int, db: Session = Depends(get_db)):
     secret = generate_mfa_secret()
     backup_codes = generate_backup_codes()
 
-    # Save in the database
+
     user.mfa_secret = secret
     user.mfa_backup_codes = json.dumps(backup_codes)
     user.mfa_enabled = True
     db.commit()
 
-    # Generate QR Code
+
     totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(name=user.email, issuer_name="YourApp")
     qr = qrcode.make(uri)
@@ -216,3 +216,11 @@ def disable_mfa(user_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "MFA disabled successfully"}
+
+
+"""
+Script that creates user for each restaurant
+"""
+
+for i in [1,2,3,4]:
+    print(i)
