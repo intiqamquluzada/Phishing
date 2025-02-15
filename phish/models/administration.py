@@ -1,8 +1,8 @@
 from sqlalchemy import (Column, Integer, String, Boolean, Enum, ForeignKey)
 from sqlalchemy.orm import relationship
-from phish.database import Base, engine
-from phish.models.users import User
-from phish.models.campaign import Campaign
+from database import Base, engine
+from models.users import User
+from models.campaign import Campaign
 from enum import Enum as PyEnum
 
 
@@ -15,8 +15,8 @@ class Administration(Base):
     __tablename__ = "administration"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    status = Column(String)
+    name = Column(String(150))
+    status = Column(String(150))
     is_active = Column(Boolean, default=True)
 
     user_id = Column(Integer, ForeignKey("user.id"))
@@ -31,8 +31,7 @@ class Invite(Base):
     user = relationship("User", back_populates="invite")
     # campaign_id = Column(Integer, ForeignKey("campaign.id"))
     # campaign = relationship("Campaign", back_populates="invite")
-    verification_code = Column(String)
+    verification_code = Column(String(150))
 
 
 
-Base.metadata.create_all(bind=engine)

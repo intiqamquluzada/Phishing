@@ -3,10 +3,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from .routers import users, training, email, target, administration, role, campaign
+from routers import users, training, email, target, administration, role, campaign
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from .routers.email import manager
+from routers.email import manager
 
 app = FastAPI()
 

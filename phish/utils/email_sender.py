@@ -4,8 +4,8 @@ from fastapi import HTTPException
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from sqlalchemy.orm import Session
 
-from phish.external_services.inject_tracking import inject_tracking_pixel_and_links
-from phish.models.email import EmailTemplate
+from external_services.inject_tracking import inject_tracking_pixel_and_links
+from models.email import EmailTemplate
 
 conf = ConnectionConfig(
     MAIL_USERNAME="quluzadintiqam@gmail.com",

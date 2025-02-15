@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from typing import List
 from uuid import uuid4
 
-from phish.dependencies import  ConnectionManager
-from ..database import get_db
-from phish.external_services.inject_tracking import inject_tracking_pixel_and_links
-from phish.models.email import EmailTemplate, EmailReadEvent
-from phish.schemas.email import EmailDifficulty, EmailTemplateResponse
-from phish.utils.email_sender import send_email_with_tracking
-from phish.utils.files import save_file
+from dependencies import  ConnectionManager
+from database import get_db
+from external_services.inject_tracking import inject_tracking_pixel_and_links
+from models.email import EmailTemplate, EmailReadEvent
+from schemas.email import EmailDifficulty, EmailTemplateResponse
+from utils.email_sender import send_email_with_tracking
+from utils.files import save_file
 
 router = APIRouter(
     prefix="/email-templates",

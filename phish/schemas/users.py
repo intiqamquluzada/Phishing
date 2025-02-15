@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from phish.schemas.role import RoleResponse, RoleResponseForAdminstration
+from schemas.role import RoleResponse, RoleResponseForAdminstration
 
 
 class UserBase(BaseModel):

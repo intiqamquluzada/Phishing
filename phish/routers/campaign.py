@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Depends, APIRouter
 from sqlalchemy.orm import Session
-from phish.models.campaign import Campaign
-from phish.schemas.campaign import CampaignCreate
-from ..database import get_db
+from models.campaign import Campaign
+from schemas.campaign import CampaignCreate
+from database import get_db
 
-from phish.external_services.campaign_broadcast import broadcast_campaign_details
+from external_services.campaign_broadcast import broadcast_campaign_details
 
 
 

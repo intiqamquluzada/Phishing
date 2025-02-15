@@ -2,8 +2,8 @@ import os
 import shutil
 from urllib.parse import urljoin
 from fastapi import Request
-from phish.utils.generator import generate_short_uuid
-from phish import main
+from utils.generator import generate_short_uuid
+import main
 
 
 def save_file(file, request: Request):

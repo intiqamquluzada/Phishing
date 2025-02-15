@@ -8,17 +8,17 @@ from io import BytesIO
 import qrcode
 from fastapi.responses import StreamingResponse
 
-from ..database import get_db
-from phish.external_services.mfa_helpers import generate_mfa_secret, generate_backup_codes, use_backup_code, \
+from database import get_db
+from external_services.mfa_helpers import generate_mfa_secret, generate_backup_codes, use_backup_code, \
     verify_mfa_token, mfa_dependency
-from phish.routers import auth
+from routers import auth
 
-from phish.models.users import User as UserModel
-from phish.schemas.users import User, UserCreate, ForgotPassword, ForgotPasswordConfirm, Token, TokenData
-from phish.models.role import Role
+from models.users import User as UserModel
+from schemas.users import User, UserCreate, ForgotPassword, ForgotPasswordConfirm, Token, TokenData
+from models.role import Role
 import sqlalchemy
-from phish.utils.uid import encode_uid, decode_uid
-from phish.utils.email_sender import send_email_with_tracking, send_email
+from utils.uid import encode_uid, decode_uid
+from utils.email_sender import send_email_with_tracking, send_email
 import uuid
 from fastapi.responses import JSONResponse
 

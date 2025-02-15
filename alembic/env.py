@@ -1,8 +1,8 @@
 from logging.config import fileConfig
 from sqlalchemy import MetaData
 
-from phish.database import engine
-from phish.models.users import Base
+from database import engine
+from models.users import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 

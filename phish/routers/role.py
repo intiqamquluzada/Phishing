@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 from fastapi import (APIRouter, Depends, HTTPException, Form,
                      UploadFile, File, Request, Query)
 from fastapi.responses import JSONResponse
-from ..database import get_db
+from database import get_db
 from enum import Enum as PyEnum
 from typing import Dict, Any
-from phish.schemas.role import RoleBase, RoleResponse, Permission, RolePatch, RoleListResponse, RoleCreateBase
-from phish.models.role import Role
-from phish.models.users import User
+from schemas.role import RoleBase, RoleResponse, Permission, RolePatch, RoleListResponse, RoleCreateBase
+from models.role import Role
+from models.users import User
 from typing import List
 
 

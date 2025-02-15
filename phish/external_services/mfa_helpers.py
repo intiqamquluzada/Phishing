@@ -3,10 +3,10 @@ import secrets
 import json
 from fastapi import Depends, HTTPException, status
 
-from phish.database import SessionLocal
-from phish.models.users import User as UserModel
-from ..database import get_db
-from phish.routers.auth import get_current_user
+from database import SessionLocal
+from models.users import User as UserModel
+from database import get_db
+from routers.auth import get_current_user
 from sqlalchemy.orm import Session
 
 

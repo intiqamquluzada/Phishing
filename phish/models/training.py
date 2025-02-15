@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Boolean
 from enum import Enum as PyEnum
 from sqlalchemy.orm import relationship
-from phish.database import Base, engine
+from database import Base, engine
 
 
 class TypeOfTraining(PyEnum):
@@ -14,7 +14,7 @@ class Question(Base):
     __tablename__ = 'Question'
 
     id = Column(Integer, primary_key=True, index=True)
-    question = Column(String)
+    question = Column(String(150))
     training_information_id = Column(Integer, ForeignKey("TrainingInformation.id"))
     training_information = relationship("TrainingInformation", back_populates="question")
 
@@ -34,14 +34,13 @@ class Training(Base):
     __tablename__ = 'Training'
 
     id = Column(Integer, primary_key=True, index=True)
-    module_name = Column(String)
+    module_name = Column(String(150))
     passing_score = Column(Integer)
     training_information = Column(Integer, ForeignKey("TrainingInformation.id"))
-    presentation = Column(String)
-    preview = Column(String)
+    presentation = Column(String(150))
+    preview = Column(String(150))
 
 
     info = relationship("TrainingInformation", back_populates="trainings")
 
 
-Base.metadata.create_all(bind=engine)

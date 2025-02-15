@@ -1,9 +1,9 @@
-from .database import SessionLocal
+from database import SessionLocal
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
 
 from fastapi import Depends, HTTPException, status
-from phish.models.users import User as UserModel
+from models.users import User as UserModel
 
 
 

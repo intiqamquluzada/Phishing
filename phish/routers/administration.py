@@ -2,16 +2,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy import not_
 from fastapi import APIRouter, Depends, HTTPException, Form, Query, Request
 from fastapi.responses import JSONResponse
-from phish.routers import auth
-from ..database import get_db
-from phish.models.users import User
-from phish.routers.auth import get_user
-from phish.models.administration import Administration, Invite
-from phish.schemas.administration import (AdministrationBase, AdministrationUpdate,
+from routers import auth
+from database import get_db
+from models.users import User
+from routers.auth import get_user
+from models.administration import Administration, Invite
+from schemas.administration import (AdministrationBase, AdministrationUpdate,
                                           AdministrationPatch, AdministrationResponse,
                                           SendInvite)
-from phish.utils.uid import encode_uid, decode_uid
-from phish.utils.email_sender import send_email_with_tracking, send_email
+from utils.uid import encode_uid, decode_uid
+from utils.email_sender import send_email_with_tracking, send_email
 from enum import Enum as PyEnum
 from typing import List, Optional
 import uuid

@@ -1,6 +1,6 @@
 from sqlalchemy import (Column, Integer, String, Boolean, Enum, Date, Time, ForeignKey)
 from sqlalchemy.orm import relationship
-from phish.database import Base, engine
+from database import Base, engine
 import enum
 
 
@@ -13,7 +13,7 @@ class Campaign(Base):
     __tablename__ = "campaign"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String(150), nullable=False)
     delivery_status = Column(Enum(DeliveryStatus), default=DeliveryStatus.SENT)
     scheduled_date = Column(Date, nullable=False)
     scheduled_time = Column(Time, nullable=False)
@@ -25,4 +25,3 @@ class Campaign(Base):
     email_template = relationship("EmailTemplate", back_populates="campaigns")
 
 
-Base.metadata.create_all(bind=engine)

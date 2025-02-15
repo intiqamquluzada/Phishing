@@ -5,14 +5,14 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy.orm import Session
-from phish.models.training import TypeOfTraining
-from ..database import get_db
-from phish.models.users import User
+from models.training import TypeOfTraining
+from database import get_db
+from models.users import User
 from fastapi.security import OAuth2PasswordBearer
-from phish.schemas.users import User as UserScheme
+from schemas.users import User as UserScheme
 
-from phish.schemas.users import TokenData
-from phish.models.role import Role
+from schemas.users import TokenData
+from models.role import Role
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 

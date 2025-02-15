@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum as PyEnum
-from phish.schemas.users import User, UserCreate, UserPatch, UserBase, UserForAdminstration
+from schemas.users import User, UserCreate, UserPatch, UserBase, UserForAdminstration
 from typing import Optional
 
 

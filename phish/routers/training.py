@@ -4,13 +4,13 @@ from fastapi import (APIRouter, Depends, HTTPException, Query,
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, func
 
-from phish.utils.files import save_file
-from ..database import get_db
-from phish.models.training import Training, TrainingInformation, Question
-from phish.models.training import TypeOfTraining as TrainType
-from phish.models.users import User as UserModel
-from phish.routers.auth import require_role
-from phish.schemas.training import (TrainingBase, TrainingInformationBase,
+from utils.files import save_file
+from database import get_db
+from models.training import Training, TrainingInformation, Question
+from models.training import TypeOfTraining as TrainType
+from models.users import User as UserModel
+from routers.auth import require_role
+from schemas.training import (TrainingBase, TrainingInformationBase,
                                     TrainingResponse, TrainingCreate, TrainingPatch, QuestionResponse)
 
 router = APIRouter(
