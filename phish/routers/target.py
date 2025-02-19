@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import JSONResponse
 from database import get_db
@@ -77,7 +78,6 @@ async def create_target(list_name: str = Form(...),
 
     # iterate the dataframe
     for index, row in datas.iterrows():
-        print(row.iloc[0], " iloc 00", " --- ", row.iloc[1], " iloc 11")
         new_target_user = TargetUser(
             first_name=row.iloc[0],
             last_name=row.iloc[1],
@@ -87,9 +87,14 @@ async def create_target(list_name: str = Form(...),
             target_id=new_target.id,
         )
 
+    try:
         db.add(new_target_user)
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
 
-    db.commit()
+        raise HTTPException(status_code=409, detail="The list contains an exists email that is already uploaded")
+
     db.refresh(new_target)
 
     return new_target
@@ -173,7 +178,6 @@ async def update_target_user(target_user_id: int,
     upt_user_target.email = user_target.email
     upt_user_target.company = user_target.company
     upt_user_target.job_title = user_target.job_title
-    upt_user_target.target_id = user_target.target_id
 
     db.commit()
     db.refresh(upt_user_target)
@@ -193,14 +197,14 @@ async def update_target_user_patch(target_user_id: int,
     if not upt_user_target:
         raise HTTPException(status_code=404, detail="Target User not found")
 
-    update_data = target_user.dict(exclude_unset=True)
+    update_data = target_user.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
-        setattr(upt_user_target, key, value)
+        if value is not None:
+            setattr(upt_user_target, key, value)
 
     db.commit()
     db.refresh(upt_user_target)
-
 
     return upt_user_target
 

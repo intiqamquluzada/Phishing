@@ -8,7 +8,6 @@ class TargetUserBase(BaseModel):
     email: str
     company: str
     job_title: str
-    target_id: int
 
 
 class TargetUserPatch(BaseModel):
@@ -17,11 +16,11 @@ class TargetUserPatch(BaseModel):
     email: Optional[str] = None
     company: Optional[str] = None
     job_title: Optional[str] = None
-    target_id: Optional[int] = None
 
 
 class TargetUserResponse(TargetUserBase):
     id: int
+    target_id: int
 
 
 class TargetBase(BaseModel):

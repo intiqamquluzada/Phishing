@@ -47,8 +47,6 @@ async def role_list(db: Session = Depends(get_db),
     return RoleListResponse(roles=roles_response, total_roles=total_roles)
 
 
-
-
 @router.get("/detail/{role_id}",
             response_model=RoleResponse,
             summary="Detail of Role",
