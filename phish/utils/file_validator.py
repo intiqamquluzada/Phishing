@@ -8,6 +8,14 @@ def email_file_validate(file):
         return file_path in allowed_extensions
     pass
 
+def list_file_validate(file):
+    if file:
+        file_path = pathlib.Path(str(file.filename)).suffix
+        allowed_extensions = ['.xls', '.xlsx', '.csv']
+
+        return file_path in allowed_extensions
+    pass
+
 def present_file_validate(file):
     if file:
         file_path = pathlib.Path(str(file.filename)).suffix
