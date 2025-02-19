@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, func
 
 from utils.files import save_file
+from utils.file_validator import present_file_validate, video_file_validate
 from database import get_db
 from models.training import Training, TrainingInformation, Question
 from models.training import TypeOfTraining as TrainType
@@ -106,6 +107,13 @@ def create_new_training(
 
         request: Request = None
 ):
+    
+    if presentation and not present_file_validate(presentation):
+        raise HTTPException(status_code=422, detail="The presentation file you uploaded is not in the correct format")
+    
+    if preview and not video_file_validate(preview):
+        raise HTTPException(status_code=422, detail="The video you uploaded is not in the correct format")
+    
     training_info = TrainingInformation(
         question_count=len(questions),
         pages_count=pages_count,
@@ -175,6 +183,12 @@ def update_training_by_id(training_id: int,
     training = db.query(Training).filter(Training.id == training_id).first()
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
+    
+    if presentation and not present_file_validate(presentation):
+        raise HTTPException(status_code=422, detail="The presentation file you uploaded is not in the correct format")
+    
+    if preview and not video_file_validate(preview):
+        raise HTTPException(status_code=422, detail="The video you uploaded is not in the correct format")
 
     save_preview_location = save_file(preview, request) if preview else training.preview
     save_presentation_location = save_file(presentation, request) if presentation else training.presentation
@@ -234,6 +248,12 @@ def partially_update_training(
     training = db.query(Training).filter(Training.id == training_id).first()
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
+    
+    if presentation and not present_file_validate(presentation):
+        raise HTTPException(status_code=422, detail="The presentation file you uploaded is not in the correct format")
+    
+    if preview and not video_file_validate(preview):
+        raise HTTPException(status_code=422, detail="The video you uploaded is not in the correct format")
 
     if module_name is not None:
         training.module_name = module_name

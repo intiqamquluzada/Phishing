@@ -8,6 +8,7 @@ import main
 
 def save_file(file, request: Request):
     if file:
+        
         os.makedirs(main.upload_folder, exist_ok=True)
         filename = file.filename.replace(" ", "")
         file_name = f"{generate_short_uuid()}-{filename}"

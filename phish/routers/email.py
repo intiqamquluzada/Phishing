@@ -101,8 +101,12 @@ async def update_template(template_id: int,
                           request: Request = None,
                           db: Session = Depends(get_db)):
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
+    
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
+    
+    if file and not email_file_validate(file):
+        raise HTTPException(status_code=422, detail="The template you uploaded is not in the correct format")
 
     save_location = save_file(file, request)
     if save_location:
@@ -135,6 +139,9 @@ async def update_template_patch(template_id: int,
     upt_template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
     if not upt_template:
         raise HTTPException(status_code=404, detail="Template not found")
+    
+    if file and not email_file_validate(file):
+        raise HTTPException(status_code=422, detail="The template you uploaded is not in the correct format")
 
     if name is not None:
         upt_template.name = name

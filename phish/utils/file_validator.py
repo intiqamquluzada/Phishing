@@ -19,7 +19,7 @@ def present_file_validate(file):
 def video_file_validate(file):
     if file:
         file_path = pathlib.Path(str(file.filename)).suffix
-        allowed_extensions = ['mp4', 'avi', 'mov', 'mkv']
+        allowed_extensions = ['.mp4', '.avi', '.mov', '.mkv']
 
         return file_path in allowed_extensions
     pass
