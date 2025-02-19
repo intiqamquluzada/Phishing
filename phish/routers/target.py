@@ -140,7 +140,7 @@ async def update_target_patch(target_id: int,
 
     return upt_target
 
-
+    
 @router.delete("/delete/{target_id}",
                summary="Delete Target",
                description="Delete Target")

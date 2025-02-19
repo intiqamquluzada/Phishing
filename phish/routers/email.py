@@ -11,6 +11,7 @@ from models.email import EmailTemplate, EmailReadEvent
 from schemas.email import EmailDifficulty, EmailTemplateResponse
 from utils.email_sender import send_email_with_tracking
 from utils.files import save_file
+from utils.file_validator import email_file_validate
 
 router = APIRouter(
     prefix="/email-templates",
@@ -61,6 +62,10 @@ async def create_template(name: str = Form(...),
                           file: UploadFile = File(None),
                           request: Request = None,
                           db: Session = Depends(get_db)):
+
+    if file and not email_file_validate(file):
+        raise HTTPException(status_code=422, detail="The template you uploaded is not in the correct format")
+
     save_location = save_file(file, request)
     unique_uuid = str(uuid4())
 
