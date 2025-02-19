@@ -77,6 +77,7 @@ async def create_target(list_name: str = Form(...),
 
     # iterate the dataframe
     for index, row in datas.iterrows():
+        print(row.iloc[0], " iloc 00", " --- ", row.iloc[1], " iloc 11")
         new_target_user = TargetUser(
             first_name=row.iloc[0],
             last_name=row.iloc[1],

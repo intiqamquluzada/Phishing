@@ -40,7 +40,7 @@ async def role_list(db: Session = Depends(get_db),
                 name=role.name,
                 description=role.description,
                 created_at=role.created_at,
-                permissions=role.get_permission()  # Extract permissions correctly
+                permissions=role.get_permission()
             )
         )
 
@@ -59,7 +59,15 @@ async def role_list(role_id: int, db: Session = Depends(get_db)):
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    return role
+    # return role
+    return RoleResponse(
+        id=role.id,
+        name=role.name,
+        description=role.description,
+        created_at=role.created_at,
+        permissions=role.get_permission()
+    )
+
 
 @router.get("/permissions",
             summary="List of permission",
@@ -102,7 +110,7 @@ async def create_role(role: RoleCreateBase, db: Session = Depends(get_db)):
             response_model=RoleResponse,
             summary="Update role",
             description="Update role")
-async def update_role(role_id: int, role_update: RoleBase,
+async def update_role(role_id: int, role_update: RoleCreateBase,
                       db: Session = Depends(get_db)):
     role = db.query(Role).filter(Role.id == role_id).first()
 
@@ -112,12 +120,18 @@ async def update_role(role_id: int, role_update: RoleBase,
     role.name = role_update.name
     role.description = role_update.description
 
-    role.set_permissions([perm.value for perm in role_update.permission])
+    role.set_permissions([perm.value for perm in role_update.permissions])
 
     db.commit()
     db.refresh(role)
 
-    return role
+    return RoleResponse(
+        id=role.id,
+        name=role.name,
+        description=role.description,
+        created_at=role.created_at,
+        permissions=role.get_permission()
+    )
 
 
 @router.patch("/update/{role_id}",

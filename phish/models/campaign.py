@@ -18,8 +18,8 @@ class Campaign(Base):
     scheduled_date = Column(Date, nullable=False)
     scheduled_time = Column(Time, nullable=False)
 
-    company_id = Column(Integer, ForeignKey("company.id"), nullable=False)
-    company = relationship("Company", back_populates="campaigns")
+    # company_id = Column(Integer, ForeignKey("company.id"), nullable=False)
+    # company = relationship("Company", back_populates="campaigns")
 
     email_template_id = Column(Integer, ForeignKey("email_template.id"), nullable=False)
     email_template = relationship("EmailTemplate", back_populates="campaigns")

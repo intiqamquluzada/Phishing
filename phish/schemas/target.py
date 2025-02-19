@@ -26,7 +26,7 @@ class TargetUserResponse(TargetUserBase):
 
 class TargetBase(BaseModel):
     name: str
-    target_user: List[TargetUserResponse]
+    target_users: List[TargetUserResponse]
 
 
 class TargetUpdate(BaseModel):
