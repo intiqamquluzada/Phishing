@@ -29,8 +29,8 @@ class User(Base):
     role_id = Column(Integer, ForeignKey("role.id"))
     role = relationship("Role", back_populates="users")
 
-    company_id = Column(Integer, ForeignKey("company.id"))
-    company = relationship("Company", back_populates="users")
+    # company_id = Column(Integer, ForeignKey("company.id"))
+    # company = relationship("Company", back_populates="users")
 
     administration = relationship("Administration", back_populates="user", uselist=False)
     invite = relationship("Invite", back_populates="user", uselist=False)

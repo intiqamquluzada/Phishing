@@ -15,7 +15,7 @@ class EmailTemplate(Base):
     difficulty = Column(String(150), nullable=False)
     subject = Column(String(150), nullable=True)
     body = Column(String(150), nullable=True)
-    file_path = Column(String(150), nullable=False)
+    file_path = Column(String(150), nullable=True)
 
     campaigns = relationship("Campaign", back_populates="email_template")
     read_events = relationship("EmailReadEvent", back_populates="template", cascade="all, delete-orphan")

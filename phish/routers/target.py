@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import JSONResponse
 from database import get_db
@@ -9,6 +10,7 @@ from schemas.target import (TargetBase, TargetUpdate, TargetUpdatePatch,
 from typing import List
 import pandas as pd
 from io import BytesIO
+from utils.file_validator import list_file_validate
 
 
 router = APIRouter(
@@ -63,6 +65,9 @@ async def target_user_detail(target_user_id: int,
 async def create_target(list_name: str = Form(...),
                         file: UploadFile = File(...),
                         db: Session = Depends(get_db)):
+    
+    if file and not list_file_validate(file):
+        raise HTTPException(status_code=422, detail="The list file you uploaded is not in the correct format")
 
     new_target = Target(
         name=list_name
@@ -86,9 +91,12 @@ async def create_target(list_name: str = Form(...),
             target_id=new_target.id,
         )
 
-        db.add(new_target_user)
+        try:
+            db.add(new_target_user)
+            db.commit()
+        except IntegrityError as e:
+            db.rollback()
 
-    db.commit()
     db.refresh(new_target)
 
     return new_target
@@ -134,10 +142,10 @@ async def update_target_patch(target_id: int,
 
     return upt_target
 
-
+    
 @router.delete("/delete/{target_id}",
-               summary="Delete Target",
-               description="Delete Target")
+               summary="Delete Target List",
+               description="Delete Target List")
 async def delete_target_user(target_id: int,
                              db: Session = Depends(get_db)):
     target = db.query(Target).filter(Target.id == target_id).first()
@@ -145,11 +153,17 @@ async def delete_target_user(target_id: int,
     if not target:
         raise HTTPException(status_code=404, detail="Target not found")
 
+    target_users = db.query(TargetUser).filter(TargetUser.target == target)
+
+    if target_users.first():
+        target_users.delete(synchronize_session=False)
+        db.commit()
+
     db.delete(target)
     db.commit()
 
     content = {
-        "message": "Target deleted successfully"
+        "message": "Target list deleted successfully"
     }
 
     return JSONResponse(status_code=200, content=content)
@@ -172,7 +186,6 @@ async def update_target_user(target_user_id: int,
     upt_user_target.email = user_target.email
     upt_user_target.company = user_target.company
     upt_user_target.job_title = user_target.job_title
-    upt_user_target.target_id = user_target.target_id
 
     db.commit()
     db.refresh(upt_user_target)
@@ -192,14 +205,14 @@ async def update_target_user_patch(target_user_id: int,
     if not upt_user_target:
         raise HTTPException(status_code=404, detail="Target User not found")
 
-    update_data = target_user.dict(exclude_unset=True)
+    update_data = target_user.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
-        setattr(upt_user_target, key, value)
+        if value is not None:
+            setattr(upt_user_target, key, value)
 
     db.commit()
     db.refresh(upt_user_target)
-
 
     return upt_user_target
 
